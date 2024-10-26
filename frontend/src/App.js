@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import Navbar from './Components/Navbar';
 import Content from './Components/Content';
 import Sidebar from './Components/Sidebar';
+import QuestionArea from './Components/QuestionArea';
+import KonuAnlatim from './Components/KonuAnlatim';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import './App.css';
 
@@ -16,13 +18,18 @@ function App() {
         <Navbar toggleSidebar={toggleSidebar} />
         <div className="flex h-[calc(100vh-66px)]">
           <Sidebar isOpen={isOpen} />
+          <div className="flex w-full bg-[#f9faff]">
           <Routes>
-          <Route path="/" element={<div></div> } />
-          <Route path="/soru" element={ <Content />} />
+
+
+            <Route path="/" element={<KonuAnlatim />} />
+            <Route path="/soru" element={<QuestionArea />} />
+            <Route path="/konu" element={<KonuAnlatim />} />
           </Routes>
         </div>
       </div>
-    </Router>
+      </div>
+    </Router >
   );
 }
 

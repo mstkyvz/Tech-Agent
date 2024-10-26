@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ChatHistory from './ChatHistory';
 
-const QuestionArea = () => {
-    const [selectedImage, setSelectedImage] = useState(null);
-    const [selectedImageRender, setSelectedImageRender] = useState(null);
+const KonuAnlatim = () => {
+    const [selectedPDF, setSelectedPDF] = useState(null);
+    const [pdfName, setPdfName] = useState('');
     const [message, setMessage] = useState('');
     const [chatHistory, setChatHistory] = useState(() => {
         const saved = localStorage.getItem('chatHistory');
@@ -21,20 +21,19 @@ const QuestionArea = () => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [chatHistory]);
 
-
-    const handleImageChange = (e) => {
+    const handlePDFChange = (e) => {
         const file = e.target.files ? e.target.files[0] : e.dataTransfer.files[0];
         if (file) {
-            if (file.size > 5 * 1024 * 1024) { // 5MB limit
-                alert("File size should not exceed 5MB");
+            if (file.size > 10 * 1024 * 1024) { // 10MB limit
+                alert("File size should not exceed 10MB");
                 return;
             }
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setSelectedImageRender(reader.result);
-            };
-            reader.readAsDataURL(file);
-            setSelectedImage(file);
+            if (file.type !== 'application/pdf') {
+                alert("Please upload a PDF file");
+                return;
+            }
+            setSelectedPDF(file);
+            setPdfName(file.name);
         }
     };
 
@@ -51,7 +50,7 @@ const QuestionArea = () => {
     const handleDrop = (e) => {
         e.preventDefault();
         e.currentTarget.classList.remove('border-blue-500');
-        handleImageChange(e);
+        handlePDFChange(e);
     };
 
     const processStream = async (response, messageIndex = null) => {
@@ -62,9 +61,7 @@ const QuestionArea = () => {
         try {
             while (true) {
                 const { value, done } = await reader.read();
-
                 if (done) break;
-
                 const chunk = decoder.decode(value);
                 accumulatedResponse += chunk;
 
@@ -91,24 +88,22 @@ const QuestionArea = () => {
         
         setRefreshingIndex(index);
         
-        const userMessage = chatHistory[index - 1]; // Get the user message that preceded this response
+        const userMessage = chatHistory[index - 1]; 
         if (!userMessage) return;
 
         const formData = new FormData();
         formData.append('message', userMessage.content || '');
-        if (userMessage.image) {
-            // Convert base64 to blob
-            const response = await fetch(userMessage.image);
+        if (userMessage.pdf) {
+            const response = await fetch(userMessage.pdf);
             const blob = await response.blob();
-            formData.append('file', blob);
+            formData.append('file', blob, 'document.pdf');
         }
 
-
-        const previousMessages = chatHistory.slice(Math.max(0, index - 5), index); // Get up to 5 messages before this one
+        const previousMessages = chatHistory.slice(Math.max(0, index - 5), index); 
         formData.append('history', JSON.stringify(previousMessages));
 
         try {
-            const response = await fetch('http://127.0.0.1:8000/chat_question/', {
+            const response = await fetch('http://127.0.0.1:8000/chat_konu/', {
                 method: 'POST',
                 body: formData,
             });
@@ -136,15 +131,16 @@ const QuestionArea = () => {
     };
 
     const handleSendMessage = async () => {
-        if (!message && !selectedImage) {
-            alert("Please enter a message or select an image.");
+        if (!message && !selectedPDF) {
+            alert("Please enter a message or select a PDF file.");
             return;
         }
 
         const userMessage = {
             type: 'user',
             content: message || '',
-            image: selectedImageRender,
+            pdf: selectedPDF ? URL.createObjectURL(selectedPDF) : null,
+            pdfName: pdfName,
             timestamp: new Date().toISOString()
         };
 
@@ -152,8 +148,8 @@ const QuestionArea = () => {
 
         const formData = new FormData();
         formData.append('message', message || '');
-        if (selectedImage) {
-            formData.append('file', selectedImage);
+        if (selectedPDF) {
+            formData.append('file', selectedPDF, selectedPDF.name);
         }
 
         const lastMessages = chatHistory.slice(-5);
@@ -162,7 +158,7 @@ const QuestionArea = () => {
         setIsLoading(true);
 
         try {
-            const response = await fetch('http://127.0.0.1:8000/chat_question/', {
+            const response = await fetch('http://127.0.0.1:8000/chat_konu/', {
                 method: 'POST',
                 body: formData,
             });
@@ -189,8 +185,8 @@ const QuestionArea = () => {
         } finally {
             setIsLoading(false);
             setMessage('');
-            setSelectedImage(null);
-            setSelectedImageRender(null);
+            setSelectedPDF(null);
+            setPdfName('');
         }
     };
 
@@ -210,21 +206,21 @@ const QuestionArea = () => {
 
     return (
         <div className='relative flex flex-col w-full flex-1 justify-start items-center'>
-        <div className="mx-auto flex-1 w-full items-start justify-center overflow-y-auto mb-48">
-            <div className="flex w-full px-10">
-                <ChatHistory 
-                    messages={chatHistory} 
-                    onRefreshMessage={handleRefreshMessage}
-                />
-                <button
-                    onClick={clearChat}
-                    className="absolute top-4 right-4 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-                >
-                    Clear Chat
-                </button>
+            <div className="mx-auto flex-1 w-full items-start justify-center overflow-y-auto mb-48">
+                <div className="flex w-full px-10">
+                    <ChatHistory 
+                        messages={chatHistory} 
+                        onRefreshMessage={handleRefreshMessage}
+                    />
+                    <button
+                        onClick={clearChat}
+                        className="absolute top-4 right-4 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+                    >
+                        Clear Chat
+                    </button>
+                </div>
+                <div ref={chatEndRef} />
             </div>
-            <div ref={chatEndRef} />
-        </div>
             <div className="flex flex-col items-center w-4/5 absolute bottom-0 bg-opacity-60">
                 <div className="flex flex-col items-center mt-2 mb-5 w-3/5">
                     <div className="bg-white rounded-lg w-full h-2/12 md:h-[100px]"
@@ -237,11 +233,19 @@ const QuestionArea = () => {
                                         <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
                                     </svg>
                                     <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
-                                        <span className="font-semibold">Drag & drop or click here to upload an image of your problem</span>
+                                        <span className="font-semibold">
+                                            {pdfName ? `Selected: ${pdfName}` : 'Drag & drop or click here to upload a PDF file'}
+                                        </span>
                                     </p>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">PNG, JPG or JPEG</p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">PDF files only (max 10MB)</p>
                                 </div>
-                                <input id="dropzone-file" type="file" className="hidden" onChange={handleImageChange} />
+                                <input 
+                                    id="dropzone-file" 
+                                    type="file" 
+                                    className="hidden" 
+                                    onChange={handlePDFChange}
+                                    accept=".pdf"
+                                />
                             </label>
                         </div>
                     </div>
@@ -276,8 +280,7 @@ const QuestionArea = () => {
                 </div>
             </div>
         </div>
-
     );
 };
 
-export default QuestionArea;
+export default KonuAnlatim;
