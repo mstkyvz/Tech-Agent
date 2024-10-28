@@ -20,6 +20,30 @@ const QuestionArea = ({ onHistorySaved, initialChatHistory = [] }) => {
     const [refreshingIndex, setRefreshingIndex] = useState(null);
     const chatEndRef = useRef(null);
     const [chatHistories, setChatHistories] = useState([]);
+    const [id, setId] = useState();
+
+
+   const getNextChatId = async () => {
+        try {
+            const response = await fetch('http://127.0.0.1:8000/get_all_histories/');
+            if (response.ok) {
+                const histories = await response.json();
+                if (histories.length === 0) return '1';
+                
+                // Find the highest numeric ID
+                const numericIds = histories
+                    .map(history => parseInt(history.id))
+                    .filter(id => !isNaN(id));
+                
+                const maxId = Math.max(...numericIds, 0);
+                return (maxId + 1).toString();
+            }
+            return '1';
+        } catch (error) {
+            console.error('Error fetching histories:', error);
+            return '1';
+        }
+    };
 
     const generateTitle = (messages) => {
         const timestamp = new Date().toISOString();
@@ -28,12 +52,6 @@ const QuestionArea = ({ onHistorySaved, initialChatHistory = [] }) => {
         const contentToHash = `${timestamp}-${firstMessage.substring(0, 50)}-${lastMessage.substring(0, 50)}`;
         const hash = generateHash(contentToHash);
         return `chat-${hash}`;
-    };
-
-    const generateChatId = () => {
-        const timestamp = new Date().getTime();
-        const random = Math.random().toString(36).substring(2, 8);
-        return `${timestamp}-${random}`;
     };
 
     const generateHash = (str) => {
@@ -45,12 +63,15 @@ const QuestionArea = ({ onHistorySaved, initialChatHistory = [] }) => {
         }
         return Math.abs(hash).toString(16).substring(0, 8);
     };
-
     useEffect(() => {
-        if (!chatId && chatHistory.length === 0) {
-            const newChatId = generateChatId();
-            navigate(`/soru/${newChatId}`);
-        }
+        const initializeChatId = async () => {
+            if (!chatId && chatHistory.length === 0) {
+                const newChatId = await getNextChatId();
+                navigate(`/soru/${newChatId}`);
+            }
+        };
+        
+        initializeChatId();
     }, [chatId, chatHistory, navigate]);
 
     useEffect(() => {
@@ -267,6 +288,7 @@ const fetchChatHistories = async () => {
             const response = await fetch(`http://127.0.0.1:8000/get_chat_history/${historyId}`);
             if (response.ok) {
                 const history = await response.json();
+                setId(historyId);
                 setChatHistory(history.messages);
             }
         } catch (error) {
@@ -312,8 +334,7 @@ const fetchChatHistories = async () => {
         saveChatHistory();
         setChatHistory([]);
         localStorage.removeItem('chatHistory');
-        const newChatId = generateChatId();
-        navigate(`/soru/${newChatId}`);
+        navigate(`/soru/${chatId}`);
     };
 
     return (

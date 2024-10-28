@@ -22,6 +22,8 @@ import models
 import schemas
 from database import SessionLocal, engine
 
+import create_videos
+
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
@@ -33,7 +35,7 @@ def get_db():
     finally:
         db.close()
         
-genai.configure(api_key='AIzaSyCNHaneKcsHabFH9PPxUYBWJ1cJldFshHg')
+genai.configure(api_key='AIzaSyAy3E3BYjXjS6fyrRUbS2m8ip3Sdb3hmqA')
 model = genai.GenerativeModel('gemini-1.5-pro')  
 
 app.add_middleware(
@@ -146,13 +148,13 @@ def calculate_chat_hash(messages: List[Dict]) -> str:
     """
     hash_content = []
     for msg in messages:
-        # Only include type and content for hash calculation
+        
         hash_content.append({
             'type': msg['type'],
             'content': msg['content']
         })
     
-    # Convert to stable string representation and hash
+    
     message_str = json.dumps(hash_content, sort_keys=True)
     return hashlib.sha256(message_str.encode()).hexdigest()
 
@@ -207,8 +209,6 @@ async def get_all_histories(db: Session = Depends(get_db)):
 
 
 
-
-
 video_database = {}
 
 class VideoCreate(BaseModel):
@@ -219,19 +219,19 @@ class VideoStatus(BaseModel):
     video_url: Optional[str] = None
 
 async def create_video_task(video_id: str):
-    """Video oluşturma işlemini simüle eden fonksiyon"""
     try:
 
-        await asyncio.sleep(15)
+        await create_videos.run(video_id)
         
         
-        video_path = f"./videos/{video_id}.mp4"  
+        video_path = f"/media/videos/1080p60/{video_id}.mp4"  
         video_database[video_id] = {
             "status": "completed",
             "video_url": video_path,
             "created_at": datetime.now()
         }
     except Exception as e:
+        print(f"Error {e}")
         video_database[video_id] = {
             "status": "error",
             "error": str(e),
@@ -241,18 +241,16 @@ async def create_video_task(video_id: str):
 @app.post("/create_video")
 async def create_video(video_data: VideoCreate):
     video_id = video_data.id
-    
-    print(video_id,video_database)
+    print(video_data)
     if video_id in video_database:
         return VideoStatus(status=video_database[video_id]["status"])
     
-    # Yeni video oluşturma işlemini başlat
     video_database[video_id] = {"status": "processing"}
     
-    # Asenkron olarak video oluşturma işlemini başlat
     asyncio.create_task(create_video_task(video_id))
     
     return VideoStatus(status="processing")
+
 
 @app.get("/check_video/{video_id}")
 async def check_video(video_id: str):
@@ -266,7 +264,7 @@ async def check_video(video_id: str):
         video_url=video_info.get("video_url")
     )
 
-# Video silme endpoint'i (isteğe bağlı)
+
 @app.delete("/delete_video/{video_id}")
 async def delete_video(video_id: str):
     if video_id not in video_database:

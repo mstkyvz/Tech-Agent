@@ -11,7 +11,6 @@ const AppContent = () => {
     const [chatHistories, setChatHistories] = useState([]);
     const [currentChatHistory, setCurrentChatHistory] = useState(null);
     const navigate = useNavigate();
-
     const toggleSidebar = () => setIsOpen(!isOpen);
 
     useEffect(() => {

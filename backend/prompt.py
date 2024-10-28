@@ -149,7 +149,7 @@ Görseli inceleyerek, içindeki sorunun çözümünü aşağıda verilen adımla
 5. **Sesli Anlatım:**
    - Her adımda Manim Voicer kullanarak çözümü sesli bir şekilde anlat.
 
-6. En az 10 stepten oluşsun.
+6. En az 5 stepten oluşsun.
 
 7. Her işlem en az 3 saniye sürmesi gerekiyor.örnek wait(3)
 
@@ -160,12 +160,12 @@ NOTE: self.voiceover textleri uzun olsun tüm step i anlatsın. text uzunluğu e
 
 ```python
 from manim_voiceover import VoiceoverScene
-from manim_voiceover.services.openai import OpenAIService
+from manim_voiceover.services.gtts import GTTSService
 from manim import *
 
 class Solution(VoiceoverScene):
     def construct(self):
-        self.set_speech_service(OpenAIService(voice='nova'))
+        self.set_speech_service(GTTSService(lang="tr"))
         step_1()
         step_2()
 
@@ -178,7 +178,6 @@ class Solution(VoiceoverScene):
         with self.voiceover(text="") as tracker:
             self.play(....)
             self.wait(..)
-    ...
 ```
 
 ### Örnek Çıktı Yapısı:
@@ -226,7 +225,10 @@ class Solution(VoiceoverScene):
   - Grafik_2 (yukarı kaydır)
   - Çözüm_7
   - **FadeOut**
-  
+
+Note: Oluşturulan Classın ismi "Solution" olacak.
+Note: oluşturduğun formüller vb başına self. koymayı unutma
+
 Çözüm:
 {}
 
