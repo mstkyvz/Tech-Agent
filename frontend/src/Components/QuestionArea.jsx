@@ -1,17 +1,57 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import ChatHistory from './ChatHistory';
+import VideoModal from './VideoModel';
 
-const QuestionArea = () => {
+const QuestionArea = ({ onHistorySaved, initialChatHistory = [] }) => {
+    const navigate = useNavigate();
+    const { chatId } = useParams();
     const [selectedImage, setSelectedImage] = useState(null);
     const [selectedImageRender, setSelectedImageRender] = useState(null);
     const [message, setMessage] = useState('');
     const [chatHistory, setChatHistory] = useState(() => {
+        if (initialChatHistory.length > 0) {
+            return initialChatHistory;
+        }
         const saved = localStorage.getItem('chatHistory');
         return saved ? JSON.parse(saved) : [];
     });
     const [isLoading, setIsLoading] = useState(false);
     const [refreshingIndex, setRefreshingIndex] = useState(null);
     const chatEndRef = useRef(null);
+    const [chatHistories, setChatHistories] = useState([]);
+
+    const generateTitle = (messages) => {
+        const timestamp = new Date().toISOString();
+        const firstMessage = messages[0]?.content || '';
+        const lastMessage = messages[messages.length - 1]?.content || '';
+        const contentToHash = `${timestamp}-${firstMessage.substring(0, 50)}-${lastMessage.substring(0, 50)}`;
+        const hash = generateHash(contentToHash);
+        return `chat-${hash}`;
+    };
+
+    const generateChatId = () => {
+        const timestamp = new Date().getTime();
+        const random = Math.random().toString(36).substring(2, 8);
+        return `${timestamp}-${random}`;
+    };
+
+    const generateHash = (str) => {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            const char = str.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; 
+        }
+        return Math.abs(hash).toString(16).substring(0, 8);
+    };
+
+    useEffect(() => {
+        if (!chatId && chatHistory.length === 0) {
+            const newChatId = generateChatId();
+            navigate(`/soru/${newChatId}`);
+        }
+    }, [chatId, chatHistory, navigate]);
 
     useEffect(() => {
         localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
@@ -21,6 +61,15 @@ const QuestionArea = () => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [chatHistory]);
 
+    useEffect(() => {
+        fetchChatHistories();
+    }, []);
+
+    useEffect(() => {
+        if (initialChatHistory.length > 0) {
+            setChatHistory(initialChatHistory);
+        }
+    }, [initialChatHistory]);
 
     const handleImageChange = (e) => {
         const file = e.target.files ? e.target.files[0] : e.dataTransfer.files[0];
@@ -91,20 +140,20 @@ const QuestionArea = () => {
         
         setRefreshingIndex(index);
         
-        const userMessage = chatHistory[index - 1]; // Get the user message that preceded this response
+        const userMessage = chatHistory[index - 1]; 
         if (!userMessage) return;
 
         const formData = new FormData();
         formData.append('message', userMessage.content || '');
         if (userMessage.image) {
-            // Convert base64 to blob
+           
             const response = await fetch(userMessage.image);
             const blob = await response.blob();
             formData.append('file', blob);
         }
 
 
-        const previousMessages = chatHistory.slice(Math.max(0, index - 5), index); // Get up to 5 messages before this one
+        const previousMessages = chatHistory.slice(Math.max(0, index - 5), index); 
         formData.append('history', JSON.stringify(previousMessages));
 
         try {
@@ -201,30 +250,83 @@ const QuestionArea = () => {
         }
     };
 
-    const clearChat = () => {
-        if (window.confirm('Are you sure you want to clear the chat history?')) {
-            setChatHistory([]);
-            localStorage.removeItem('chatHistory');
+const fetchChatHistories = async () => {
+        try {
+            const response = await fetch('http://127.0.0.1:8000/get_all_histories/');
+            if (response.ok) {
+                const histories = await response.json();
+                setChatHistories(histories);
+            }
+        } catch (error) {
+            console.error('Error fetching chat histories:', error);
         }
+    };
+
+    const handleHistorySelect = async (historyId) => {
+        try {
+            const response = await fetch(`http://127.0.0.1:8000/get_chat_history/${historyId}`);
+            if (response.ok) {
+                const history = await response.json();
+                setChatHistory(history.messages);
+            }
+        } catch (error) {
+            console.error('Error loading chat history:', error);
+        }
+    };
+    const saveChatHistory = async () => {
+        if (chatHistory.length === 0) return;
+
+        const autoTitle = generateTitle(chatHistory);
+        const currentChatId = chatId ;
+
+        try {
+            const response = await fetch('http://127.0.0.1:8000/save_chat_history/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    id: autoTitle,
+                    title: autoTitle,
+                    messages: chatHistory
+                }),
+            });
+
+            if (response.ok) {
+                console.log('Chat history saved successfully!');
+                if (onHistorySaved) {
+                    onHistorySaved();
+                }
+                if (!chatId) {
+                    navigate(`/soru/${currentChatId}`);
+                }
+            } else {
+                throw new Error('Failed to save chat history');
+            }
+        } catch (error) {
+            console.error('Error saving chat history:', error);
+        }
+    };
+
+    const clearChat = () => {
+        saveChatHistory();
+        setChatHistory([]);
+        localStorage.removeItem('chatHistory');
+        const newChatId = generateChatId();
+        navigate(`/soru/${newChatId}`);
     };
 
     return (
         <div className='relative flex flex-col w-full flex-1 justify-start items-center'>
-        <div className="mx-auto flex-1 w-full items-start justify-center overflow-y-auto mb-48">
-            <div className="flex w-full px-10">
-                <ChatHistory 
-                    messages={chatHistory} 
-                    onRefreshMessage={handleRefreshMessage}
-                />
-                <button
-                    onClick={clearChat}
-                    className="absolute top-4 right-4 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-                >
-                    Clear Chat
-                </button>
+            <div className="mx-auto flex-1 w-full items-start justify-center overflow-y-auto mb-48">
+                <div className="flex w-full px-10">
+                    <ChatHistory 
+                        messages={chatHistory} 
+                        onRefreshMessage={handleRefreshMessage}
+                    />
+                </div>
+                <div ref={chatEndRef} />
             </div>
-            <div ref={chatEndRef} />
-        </div>
             <div className="flex flex-col items-center w-4/5 absolute bottom-0 bg-opacity-60">
                 <div className="flex flex-col items-center mt-2 mb-5 w-3/5">
                     <div className="bg-white rounded-lg w-full h-2/12 md:h-[100px]"
@@ -272,9 +374,25 @@ const QuestionArea = () => {
                                 </svg>
                             )}
                         </button>
+                        <div className="w-3/12">
+                        <button
+                            onClick={clearChat}
+                            className="bg-gray-500 hover:bg-gray-600 text-white text-sm font-bold py-[10px] px-4 rounded"
+                        >
+                            Yeni Sohbet
+                        </button>
+                    </div>
                     </div>
                 </div>
             </div>
+           
+           <div className="flex items-center justify-center w-3/12 h-48 right-0 m-2 absolute bottom-0">
+           <div className='flex items-center justify-center w-24 h-24'>
+           <VideoModal id={`${chatId}`}/>        
+           </div>
+
+           </div>
+
         </div>
 
     );

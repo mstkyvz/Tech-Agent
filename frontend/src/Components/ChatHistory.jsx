@@ -32,12 +32,12 @@ const ChatHistory = ({ messages, onRefreshMessage }) => {
         ul: ({ children }) => <ul className="list-disc pl-6 mb-4">{children}</ul>,
         ol: ({ children }) => <ol className="list-decimal pl-6 mb-4">{children}</ol>,
         a: ({ href, children }) => (
-            <a href={href} className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">
+            <a href={href} className="text-gray-200 hover:underline" target="_blank" rel="noopener noreferrer">
                 {children}
             </a>
         ),
         blockquote: ({ children }) => (
-            <blockquote className="border-l-4 border-gray-300 pl-4 italic my-4">
+            <blockquote className="border-l-4 border-gray-100 pl-4 italic my-4">
                 {children}
             </blockquote>
         ),
@@ -48,15 +48,15 @@ const ChatHistory = ({ messages, onRefreshMessage }) => {
             {messages.map((message, index) => (
                 <div 
                     key={index} 
-                    className={`flex w-full ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                    className={`flex  w-full ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                     <div 
-                        className={`relative max-w-[70%] rounded-lg p-4 shadow-md
+                        className={`relative  max-w-[70%] rounded-lg p-6 shadow-md
                             ${message.type === 'user' 
-                                ? 'bg-blue-500 text-white ml-auto rounded-br-none' 
+                                ? 'bg-gray-200 text-black ml-auto rounded-br-none' 
                                 : message.type === 'error' 
                                     ? 'bg-red-100 text-red-800 mr-auto rounded-bl-none' 
-                                    : 'bg-gray-100 text-gray-800 mr-auto rounded-bl-none'
+                                    : 'bg-white text-black mr-auto rounded-bl-none'
                             }`}
                     >
                         {message.type !== 'user' && (
@@ -78,7 +78,7 @@ const ChatHistory = ({ messages, onRefreshMessage }) => {
                                 />
                             </div>
                         )}
-                        <div className={`prose prose-sm max-w-none ${message.type === 'user' ? 'text-white' : ''}`}>
+                        <div className={`prose prose-sm max-w-none ${message.type === 'user' ? 'text-black' : ''}`}>
                             {message.type === 'user' ? (
                                 <p className="whitespace-pre-wrap break-words">{message.content}</p>
                             ) : (
