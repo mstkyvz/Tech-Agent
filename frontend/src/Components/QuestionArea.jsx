@@ -22,47 +22,6 @@ const QuestionArea = ({ onHistorySaved, initialChatHistory = [] }) => {
     const [chatHistories, setChatHistories] = useState([]);
     const [id, setId] = useState();
 
-
-   const getNextChatId = async () => {
-        try {
-            const response = await fetch('http://127.0.0.1:8000/get_all_histories/');
-            if (response.ok) {
-                const histories = await response.json();
-                if (histories.length === 0) return '1';
-                
-                // Find the highest numeric ID
-                const numericIds = histories
-                    .map(history => parseInt(history.id))
-                    .filter(id => !isNaN(id));
-                
-                const maxId = Math.max(...numericIds, 0);
-                return (maxId + 1).toString();
-            }
-            return '1';
-        } catch (error) {
-            console.error('Error fetching histories:', error);
-            return '1';
-        }
-    };
-
-    const generateTitle = (messages) => {
-        const timestamp = new Date().toISOString();
-        const firstMessage = messages[0]?.content || '';
-        const lastMessage = messages[messages.length - 1]?.content || '';
-        const contentToHash = `${timestamp}-${firstMessage.substring(0, 50)}-${lastMessage.substring(0, 50)}`;
-        const hash = generateHash(contentToHash);
-        return `chat-${hash}`;
-    };
-
-    const generateHash = (str) => {
-        let hash = 0;
-        for (let i = 0; i < str.length; i++) {
-            const char = str.charCodeAt(i);
-            hash = ((hash << 5) - hash) + char;
-            hash = hash & hash; 
-        }
-        return Math.abs(hash).toString(16).substring(0, 8);
-    };
     useEffect(() => {
         const initializeChatId = async () => {
             if (!chatId && chatHistory.length === 0) {
@@ -154,6 +113,7 @@ const QuestionArea = ({ onHistorySaved, initialChatHistory = [] }) => {
             console.error('Error processing stream:', error);
             throw error;
         }
+        saveChatHistory();
     };
 
     const handleRefreshMessage = async (index) => {
@@ -271,7 +231,7 @@ const QuestionArea = ({ onHistorySaved, initialChatHistory = [] }) => {
         }
     };
 
-const fetchChatHistories = async () => {
+    const fetchChatHistories = async () => {
         try {
             const response = await fetch('http://127.0.0.1:8000/get_all_histories/');
             if (response.ok) {
@@ -295,10 +255,11 @@ const fetchChatHistories = async () => {
             console.error('Error loading chat history:', error);
         }
     };
+
     const saveChatHistory = async () => {
         if (chatHistory.length === 0) return;
 
-        const autoTitle = generateTitle(chatHistory);
+        const autoTitle = chatId;
         const currentChatId = chatId ;
 
         try {
@@ -320,7 +281,8 @@ const fetchChatHistories = async () => {
                     onHistorySaved();
                 }
                 if (!chatId) {
-                    navigate(`/soru/${currentChatId}`);
+                    const newChatId = await getNextChatId();
+                    navigate(`/soru/${newChatId}`);
                 }
             } else {
                 throw new Error('Failed to save chat history');
@@ -330,11 +292,34 @@ const fetchChatHistories = async () => {
         }
     };
 
-    const clearChat = () => {
-        saveChatHistory();
+    const clearChat = async () => {
+        await saveChatHistory();
         setChatHistory([]);
         localStorage.removeItem('chatHistory');
-        navigate(`/soru/${chatId}`);
+        const newChatId = await getNextChatId();
+        navigate(`/soru/${newChatId}`);
+    };
+
+    const getNextChatId = async () => {
+        try {
+            const response = await fetch('http://127.0.0.1:8000/get_all_histories/');
+            if (response.ok) {
+                const histories = await response.json();
+                if (histories.length === 0) return '1';
+                
+                // Find the highest numeric ID
+                const numericIds = histories
+                    .map(history => parseInt(history.id))
+                    .filter(id => !isNaN(id));
+                
+                const maxId = Math.max(...numericIds, 0);
+                return (maxId + 1).toString();
+            }
+            return '1';
+        } catch (error) {
+            console.error('Error fetching histories:', error);
+            return '1';
+        }
     };
 
     return (

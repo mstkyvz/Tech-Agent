@@ -35,13 +35,13 @@ const AppContent = () => {
             if (response.ok) {
                 const history = await response.json();
                 setCurrentChatHistory(history);
-                navigate(`/soru/${historyId}`);
+                navigate(`/soru/${historyId}`); 
                 
             }
         } catch (error) {
             console.error('Error loading chat history:', error);
         }
-    };
+    };  
 
     return (
         <div className="flex flex-col">
@@ -81,3 +81,5 @@ const AppContent = () => {
 };
 
 export default AppContent;
+
+

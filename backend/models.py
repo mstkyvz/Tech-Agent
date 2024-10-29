@@ -4,9 +4,9 @@ from database import Base
 
 class ChatHistory(Base):
     __tablename__ = "chat_histories"
-
-    id = Column(Integer, primary_key=True, index=True)
-    title = Column(String)
-    messages = Column(Text)
-    messages_hash = Column(String(64), unique=True, index=True) 
+    
+    id = Column(String, primary_key=True) 
+    title = Column(String, unique=True, nullable=False)
+    messages = Column(Text, nullable=False)
+    messages_hash = Column(String, unique=True, nullable=False)
     timestamp = Column(DateTime(timezone=True), server_default=func.now())

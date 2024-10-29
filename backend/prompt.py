@@ -153,9 +153,11 @@ Görseli inceleyerek, içindeki sorunun çözümünü aşağıda verilen adımla
 
 7. Her işlem en az 3 saniye sürmesi gerekiyor.örnek wait(3)
 
+8. Her işlemi 0.8 Scale ile kullan. kameranın dışına çıkmasın.
+
 NOTE: Her Stepte with self.voiceover kullanmayı unutma.
 NOTE: self.voiceover textleri uzun olsun tüm step i anlatsın. text uzunluğu en az 100 karakterden oluşsun 
-
+NOTE: Önemli yerleri renlendirerek önemini vurgula. örnek SurroundingRectangle kullanabilirsin.
 ### Örnek Kod Yapısı:
 
 ```python
@@ -228,6 +230,7 @@ class Solution(VoiceoverScene):
 
 Note: Oluşturulan Classın ismi "Solution" olacak.
 Note: oluşturduğun formüller vb başına self. koymayı unutma
+
 
 Çözüm:
 {}

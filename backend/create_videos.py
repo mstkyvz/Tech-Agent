@@ -118,7 +118,13 @@ async def run(chat_id):
         print(messages)
         config.media_dir="../frontend/public/media"
         config.output_file = f"{chat_id}"
-        
+        config.background_color = "#e0e6e2" 
+        Tex.set_default(color=BLACK)
+        Text.set_default(color=BLACK)
+        Mobject.set_default(color=RED)
+        Dot.set_default(color=BLACK)
+        VMobject.set_default(color=BLACK, stroke_width=4)
+        Square.set_default(color=GREEN)
         for _ in range(10):
             try:
                 manim_code = response.split("```python\n")[1].split("```")[0]

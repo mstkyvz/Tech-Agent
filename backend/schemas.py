@@ -13,7 +13,7 @@ class ChatHistoryCreate(BaseModel):
     messages: List[dict]
 
 class ChatHistoryResponse(BaseModel):
-    id: int
+    id: str  # Changed to str to match title
     title: str
     timestamp: datetime
 

@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 from typing import List
 import json
 import hashlib
-
+import os
 import models
 import schemas
 from database import SessionLocal, engine
@@ -163,49 +163,91 @@ async def save_chat_history(
     chat_history: schemas.ChatHistoryCreate,
     db: Session = Depends(get_db)
 ):
-    # Calculate hash of the messages
     messages_hash = calculate_chat_hash(chat_history.messages)
     
-    # Check if a chat history with the same hash exists
+    # Aynı title'a sahip kaydı kontrol et
     existing_chat = db.query(models.ChatHistory).filter(
-        models.ChatHistory.messages_hash == messages_hash
+        models.ChatHistory.title == chat_history.title
     ).first()
     
     if existing_chat:
-        raise HTTPException(
-            status_code=400,
-            detail="This chat history already exists in the database"
-        )
+        try:
+            # Mevcut kaydı güncelle
+            existing_chat.messages = json.dumps(chat_history.messages)
+            existing_chat.messages_hash = messages_hash
+            db.commit()
+            db.refresh(existing_chat)
+            return existing_chat
+            
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(
+                status_code=500,
+                detail=f"Error updating chat history: {str(e)}"
+            )
     
-    # If no duplicate found, save the new chat history
+    # Yeni kayıt oluştur
     db_chat_history = models.ChatHistory(
+        id=chat_history.title,
         title=chat_history.title,
         messages=json.dumps(chat_history.messages),
-        messages_hash=messages_hash  # Save the hash in the database
+        messages_hash=messages_hash
     )
-    db.add(db_chat_history)
-    db.commit()
-    db.refresh(db_chat_history)
-    return db_chat_history
+    
+    try:
+        db.add(db_chat_history)
+        db.commit()
+        db.refresh(db_chat_history)
+        return db_chat_history
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error saving chat history: {str(e)}"
+        )
 
 @app.get("/get_chat_history/{history_id}", response_model=schemas.ChatHistoryFull)
-async def get_chat_history(history_id: int, db: Session = Depends(get_db)):
-    chat_history = db.query(models.ChatHistory).filter(models.ChatHistory.id == history_id).first()
-    if chat_history is None:
-        raise HTTPException(status_code=404, detail="Chat history not found")
-    
-    return {
-        "id": chat_history.id,
-        "title": chat_history.title,
-        "timestamp": chat_history.timestamp,
-        "messages": json.loads(chat_history.messages)
-    }
-    
+async def get_chat_history(history_id: str, db: Session = Depends(get_db)):  # Changed to str
+    try:
+        chat_history = db.query(models.ChatHistory).filter(
+            models.ChatHistory.id == history_id
+        ).first()
+        
+        if chat_history is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Chat history not found"
+            )
+        
+        return {
+            "id": chat_history.id,
+            "title": chat_history.title,
+            "timestamp": chat_history.timestamp,
+            "messages": json.loads(chat_history.messages)
+        }
+    except json.JSONDecodeError:
+        raise HTTPException(
+            status_code=500,
+            detail="Error decoding messages from database"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error retrieving chat history: {str(e)}"
+        )
+
 @app.get("/get_all_histories/", response_model=List[schemas.ChatHistoryResponse])
 async def get_all_histories(db: Session = Depends(get_db)):
-    histories = db.query(models.ChatHistory).order_by(models.ChatHistory.timestamp.desc()).all()
-    return histories    
-
+    try:
+        histories = db.query(models.ChatHistory).order_by(
+            models.ChatHistory.timestamp.desc()
+        ).all()
+        return histories
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error retrieving chat histories: {str(e)}"
+        )
 
 
 
@@ -221,10 +263,18 @@ class VideoStatus(BaseModel):
 async def create_video_task(video_id: str):
     try:
 
+        video_path = f"/media/videos/1080p60/{video_id}.mp4"  
+        if os.path.exists("../frontend/public"+video_path):
+            if not video_id in video_database:
+                video_database[video_id] = {
+                    "status": "completed",
+                    "video_url": video_path,
+                    "created_at": datetime.now()
+                }
+            return
         await create_videos.run(video_id)
         
-        
-        video_path = f"/media/videos/1080p60/{video_id}.mp4"  
+    
         video_database[video_id] = {
             "status": "completed",
             "video_url": video_path,
@@ -232,16 +282,25 @@ async def create_video_task(video_id: str):
         }
     except Exception as e:
         print(f"Error {e}")
-        video_database[video_id] = {
-            "status": "error",
-            "error": str(e),
-            "created_at": datetime.now()
-        }
+        # video_database[video_id] = {
+        #     "status": "error",
+        #     "error": str(e),
+        #     "created_at": datetime.now()
+        # }
 
 @app.post("/create_video")
 async def create_video(video_data: VideoCreate):
     video_id = video_data.id
-    print(video_data)
+    
+    video_path = f"/media/videos/1080p60/{video_id}.mp4"  
+    if os.path.exists("../frontend/public"+video_path):
+            if not video_id in video_database:
+                video_database[video_id] = {
+                    "status": "completed",
+                    "video_url": video_path,
+                    "created_at": datetime.now()
+                }
+            return VideoStatus(status=video_database[video_id]["status"])
     if video_id in video_database:
         return VideoStatus(status=video_database[video_id]["status"])
     

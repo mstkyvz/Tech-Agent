@@ -36,14 +36,14 @@ const Sidebar = ({ isOpen, chatHistories = [], onHistorySelect }) => {
                             <span className="text-sm text-gray-500 px-4 py-2 block">
                                 Saved Questions
                             </span>
-                            <ul className="mt-2">
+                            <ul className="mt-2 overflow-y-auto">
                                 {chatHistories.map((history) => (
                                     <li key={history.id}>
                                         <button
                                             onClick={() => onHistorySelect(history.id)}
                                             className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
                                         >
-                                            {history.title}
+                                            Chat-{history.title}
                                         </button>
                                     </li>
                                 ))}
