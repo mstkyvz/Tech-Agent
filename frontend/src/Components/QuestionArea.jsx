@@ -1,7 +1,71 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { PDFDownloadLink, Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
+import { Download } from 'lucide-react';
 import ChatHistory from './ChatHistory';
 import VideoModal from './VideoModel';
+
+// PDF styles
+const styles = StyleSheet.create({
+  page: {
+    padding: 30,
+    backgroundColor: '#ffffff'
+  },
+  message: {
+    marginBottom: 20,
+    padding: 10,
+    borderRadius: 5,
+  },
+  userMessage: {
+    backgroundColor: '#f3f4f6',
+    marginLeft: '20%',
+  },
+  assistantMessage: {
+    backgroundColor: '#ffffff',
+    marginRight: '20%',
+    border: '1px solid #e5e7eb',
+  },
+  messageText: {
+    fontSize: 12,
+    lineHeight: 1.5,
+  },
+  image: {
+    marginBottom: 10,
+    maxWidth: '100%',
+    maxHeight: 200,
+    objectFit: 'contain',
+  },
+  timestamp: {
+    fontSize: 10,
+    color: '#666666',
+    marginTop: 5,
+  },
+});
+
+// PDF Document Component
+const ChatPDF = ({ messages }) => (
+  <Document>
+    <Page size="A4" style={styles.page}>
+      {messages.map((message, index) => (
+        <View key={index} style={[
+          styles.message,
+          message.type === 'user' ? styles.userMessage : styles.assistantMessage
+        ]}>
+          {message.image && (
+            <Image
+              src={message.image}
+              style={styles.image}
+            />
+          )}
+          <Text style={styles.messageText}>{message.content}</Text>
+          <Text style={styles.timestamp}>
+            {new Date(message.timestamp).toLocaleString()}
+          </Text>
+        </View>
+      ))}
+    </Page>
+  </Document>
+);
 
 const QuestionArea = ({ onHistorySaved, initialChatHistory = [] }) => {
     const navigate = useNavigate();
@@ -14,13 +78,13 @@ const QuestionArea = ({ onHistorySaved, initialChatHistory = [] }) => {
             return initialChatHistory;
         }
         const saved = localStorage.getItem('chatHistory');
+        
         return saved ? JSON.parse(saved) : [];
     });
     const [isLoading, setIsLoading] = useState(false);
     const [refreshingIndex, setRefreshingIndex] = useState(null);
     const chatEndRef = useRef(null);
     const [chatHistories, setChatHistories] = useState([]);
-    const [id, setId] = useState();
 
     useEffect(() => {
         const initializeChatId = async () => {
@@ -72,11 +136,6 @@ const QuestionArea = ({ onHistorySaved, initialChatHistory = [] }) => {
         e.currentTarget.classList.add('border-blue-500');
     };
 
-    const handleDragLeave = (e) => {
-        e.preventDefault();
-        e.currentTarget.classList.remove('border-blue-500');
-    };
-
     const handleDrop = (e) => {
         e.preventDefault();
         e.currentTarget.classList.remove('border-blue-500');
@@ -92,7 +151,10 @@ const QuestionArea = ({ onHistorySaved, initialChatHistory = [] }) => {
             while (true) {
                 const { value, done } = await reader.read();
 
-                if (done) break;
+                if (done){
+                    saveChatHistory();
+                    break;
+                }
 
                 const chunk = decoder.decode(value);
                 accumulatedResponse += chunk;
@@ -106,6 +168,7 @@ const QuestionArea = ({ onHistorySaved, initialChatHistory = [] }) => {
                             content: accumulatedResponse
                         };
                     }
+                    
                     return newHistory;
                 });
             }
@@ -113,7 +176,7 @@ const QuestionArea = ({ onHistorySaved, initialChatHistory = [] }) => {
             console.error('Error processing stream:', error);
             throw error;
         }
-        saveChatHistory();
+        
     };
 
     const handleRefreshMessage = async (index) => {
@@ -243,18 +306,7 @@ const QuestionArea = ({ onHistorySaved, initialChatHistory = [] }) => {
         }
     };
 
-    const handleHistorySelect = async (historyId) => {
-        try {
-            const response = await fetch(`http://127.0.0.1:8000/get_chat_history/${historyId}`);
-            if (response.ok) {
-                const history = await response.json();
-                setId(historyId);
-                setChatHistory(history.messages);
-            }
-        } catch (error) {
-            console.error('Error loading chat history:', error);
-        }
-    };
+
 
     const saveChatHistory = async () => {
         if (chatHistory.length === 0) return;
@@ -322,8 +374,32 @@ const QuestionArea = ({ onHistorySaved, initialChatHistory = [] }) => {
         }
     };
 
+    const ExportButton = () => (
+        <div className="absolute top-4 right-4">
+          <PDFDownloadLink
+            document={<ChatPDF messages={chatHistory} />}
+            fileName={`chat-${chatId}.pdf`}
+            className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded flex items-center gap-2"
+          >
+            {({ blob, url, loading, error }) =>
+              loading ? (
+                'Loading...'
+              ) : (
+                <>
+                  <Download size={18} />
+                  PDF
+                </>
+              )
+            }
+          </PDFDownloadLink>
+        </div>
+      );
+
     return (
         <div className='relative flex flex-col w-full flex-1 justify-start items-center'>
+            <div className='z-50 absolute right-0  border-r-8'>
+            <ExportButton />
+            </div>
             <div className="mx-auto flex-1 w-full items-start justify-center overflow-y-auto mb-48">
                 <div className="flex w-full px-10">
                     <ChatHistory 
@@ -394,7 +470,7 @@ const QuestionArea = ({ onHistorySaved, initialChatHistory = [] }) => {
            
            <div className="flex items-center justify-center w-3/12 h-48 right-0 m-2 absolute bottom-0">
            <div className='flex items-center justify-center w-24 h-24'>
-           <VideoModal id={`${chatId}`}/>        
+           <VideoModal id={`${chatId}`} saveChatHistory={saveChatHistory}/>        
            </div>
 
            </div>

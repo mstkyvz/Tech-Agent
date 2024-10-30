@@ -3,7 +3,7 @@ import video_before from "../dist/images/video-player.gif";
 import video_loading from "../dist/images/loading.gif";
 import video_after from "../dist/images/video.gif";
 
-const VideoModal = ({ id }) => {
+const VideoModal = ({ id ,saveChatHistory}) => {
   const modalRef = useRef(null);
   const [videoState, setVideoState] = useState('before');
   const [videoUrl, setVideoUrl] = useState('');
@@ -21,11 +21,11 @@ const VideoModal = ({ id }) => {
 
   const getVideo = async () => {
     try {
+      saveChatHistory();
       const response = await fetch(`http://127.0.0.1:8000/check_video/${id}`);
       const data = await response.json();
 
       if (data.status === 'not_found') {
-        // Send request to create video
         const createResponse = await fetch('http://127.0.0.1:8000/create_video', {
           method: 'POST',
           headers: {
