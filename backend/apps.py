@@ -34,8 +34,9 @@ def get_db():
         yield db
     finally:
         db.close()
-        
-genai.configure(api_key='AIzaSyAy3E3BYjXjS6fyrRUbS2m8ip3Sdb3hmqA')
+
+video_database = {}        
+genai.configure(api_key='AIzaSyCeusRpeamEuHVVRrNCwmu0XtDj_QL8mXc')
 model = genai.GenerativeModel('gemini-1.5-pro')  
 
 app.add_middleware(
@@ -250,8 +251,33 @@ async def get_all_histories(db: Session = Depends(get_db)):
         )
 
 
+@app.delete("/delete_chat_history/{history_id}")
+async def delete_chat_history(history_id: str, db: Session = Depends(get_db)):
+    try:
+        chat_history = db.query(models.ChatHistory).filter(
+            models.ChatHistory.id == history_id
+        ).first()
+        
+        if chat_history is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Chat history not found"
+            )
+        
+        db.delete(chat_history)
+        db.commit()
+        if history_id in video_database:
+            del video_database[history_id]
+        return {"message": "Chat history deleted successfully"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error deleting chat history: {str(e)}"
+        )
 
-video_database = {}
+
+
 
 class VideoCreate(BaseModel):
     id: str

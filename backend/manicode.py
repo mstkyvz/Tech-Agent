@@ -12,104 +12,84 @@ class Solution(VoiceoverScene):
         self.step_5()
 
     def step_1(self):
-        title = Text("Problem", font_size=0.5).to_edge(UL).set_color(BLUE)
-        problem_statement_1 = Tex(r"Bir basketbol topu 2.40 m'lik bir yükseklikten, yatayla 35°'lik bir açıyla ve 12 m/s'lik bir ilk hızla atılıyor.", font_size=30).next_to(title, DOWN, buff=0.2).scale(0.8)
-        problem_statement_2 = Tex(r"(a) Basketbol potasının yüksekliği 3.05 m ise, oyuncunun potadan ne kadar uzakta olduğunu bulun.", font_size=30).next_to(problem_statement_1, DOWN, buff=0.1).scale(0.8)
-        problem_statement_3 = Tex(r"(b) Topun potaya giriş açısı nedir?", font_size=30).next_to(problem_statement_2, DOWN, buff=0.1).scale(0.8)
+        text = "Problemimiz, A(3,4) noktasında dik kesişen iki doğrunun eğimleri toplamı 3/2 olarak verilmiş. Bu doğruların x eksenini kestiği noktalar B ve C. ABC üçgeninin alanını bulmamız gerekiyor."
+        with self.voiceover(text=text) as tracker:
+            problem = Tex(r"A(3,4) noktasında dik kesişen iki doğru \\ $m_1 + m_2 = \frac{3}{2}$, x-kesen noktaları B ve C. \\ ABC üçgeninin alanı nedir?").scale(0.8)
+            self.play(Create(problem))
+            self.wait(3)
+        self.play(FadeOut(problem))
 
-        with self.voiceover(text="Bu problemde, yatay olarak atılan bir basketbol topunun hareketini inceleyerek oyuncunun potadan ne kadar uzakta olduğunu ve topun potaya giriş açısını bulacağız.") as tracker:
-            self.play(Write(title))
-            self.wait(1)
-            self.play(Write(problem_statement_1))
-            self.wait(3)
-            self.play(Write(problem_statement_2))
-            self.wait(3)
-            self.play(Write(problem_statement_3))
-            self.wait(3)
-            self.play(FadeOut(title, problem_statement_1, problem_statement_2, problem_statement_3))
-            self.wait(1)
 
     def step_2(self):
-        title = Text("1. Adım: Verileri Belirleme", font_size=0.5).to_edge(UL).set_color(BLUE)
-        
-        verilenler = VGroup(
-            Tex(r"İlk hız ($v_0$): 12 m/s"),
-            Tex(r"Atış açısı ($\theta$): 35°"),
-            Tex(r"İlk yükseklik ($y_0$): 2.40 m"),
-            Tex(r"Pota yüksekliği ($y$): 3.05 m")
-        ).arrange(DOWN, aligned_edge=LEFT).scale(0.8)
+        text = "İki doğrumuz l1 ve l2 olsun. Eğimleri m1 ve m2. Doğrular dik kesiştikleri için m1 * m2 = -1. Ayrıca m1 + m2 = 3/2 verilmiş."
+        with self.voiceover(text=text) as tracker:
+            eq1 = MathTex(r"m_1 \cdot m_2 = -1").scale(0.8)
+            eq2 = MathTex(r"m_1 + m_2 = \frac{3}{2}").scale(0.8)
+            self.play(Create(eq1))
+            self.wait(3)
+            self.play(eq1.animate.shift(UP))
+            self.play(Create(eq2))
+            self.wait(3)
+        self.play(FadeOut(eq1), FadeOut(eq2))
 
-        with self.voiceover(text="Öncelikle, problemde verilenleri belirleyelim. Topun ilk hızı 12 metre/saniye, atış açısı yatayla 35 derece ve ilk yüksekliği 2.40 metredir. Pota yüksekliği ise 3.05 metre olarak verilmiştir.") as tracker:
-            self.play(Write(title))
-            self.wait(1)
-            for veri in verilenler:
-                self.play(Write(veri))
-                self.wait(1)
-            self.wait(2)
-            self.play(FadeOut(title, *verilenler))
-            self.wait(1)
 
     def step_3(self):
-        title = Text("2. Adım: Yatay ve Düşey Hız Bileşenlerini Bulma", font_size=0.5).to_edge(UL).set_color(BLUE)
-        explanation = Text("İlk hızı yatay ve düşey bileşenlerine ayırmamız gerekiyor:", font_size=30).next_to(title, DOWN, buff=0.2).scale(0.8)
-        horizontal_velocity = MathTex(r"v_{0x} = v_0 \cos(\theta) = 12 \cos(35°) \approx 9.83 \ m/s").next_to(explanation, DOWN, buff=0.2).scale(0.8)
-        vertical_velocity = MathTex(r"v_{0y} = v_0 \sin(\theta) = 12 \sin(35°) \approx 6.88 \ m/s").next_to(horizontal_velocity, DOWN, buff=0.2).scale(0.8)
+        text = "l1 doğrusunun denklemi y-4 = m1(x-3). x eksenini kestiği nokta B'yi bulmak için y=0 koyalım. Buradan x = 3 - 4/m1. Yani B noktası (3 - 4/m1, 0). Benzer şekilde l2 için C noktası (3 - 4/m2, 0)."
 
-        with self.voiceover(text="Topun hareketi iki boyutta gerçekleştiği için, ilk hızı yatay ve düşey bileşenlerine ayırmamız gerekiyor. Yatay hız bileşeni, ilk hızın kosinüs 35 derece ile çarpımına eşittir ve yaklaşık olarak 9.83 metre/saniyedir. Düşey hız bileşeni ise, ilk hızın sinüs 35 derece ile çarpımına eşittir ve yaklaşık olarak 6.88 metre/saniyedir.") as tracker:
-            self.play(Write(title))
-            self.wait(1)
-            self.play(Write(explanation))
+        with self.voiceover(text=text) as tracker:
+            l1_eq = MathTex(r"l_1: y - 4 = m_1(x - 3)").scale(0.8)
+            b_point = MathTex(r"B = (3 - \frac{4}{m_1}, 0)").scale(0.8)
+            c_point = MathTex(r"C = (3 - \frac{4}{m_2}, 0)").scale(0.8)
+
+            self.play(Create(l1_eq))
             self.wait(3)
-            self.play(Write(horizontal_velocity))
+            self.play(l1_eq.animate.shift(UP))
+            self.play(Create(b_point))
             self.wait(3)
-            self.play(Write(vertical_velocity))
+            self.play(b_point.animate.shift(UP))
+            self.play(Create(c_point))
             self.wait(3)
-            self.play(FadeOut(title, explanation, horizontal_velocity, vertical_velocity))
-            self.wait(1)
+        self.play(FadeOut(l1_eq), FadeOut(b_point), FadeOut(c_point))
+
+
 
     def step_4(self):
-        title = Text("3. Adım: Topun Havada Kalma Süresini Bulma", font_size=0.5).to_edge(UL).set_color(BLUE)
-        explanation_1 = Text("Topun potaya ulaşması için geçen süreyi bulmak için düşey hareketi kullanacağız.", font_size=30).next_to(title, DOWN, buff=0.2).scale(0.8)
-        formula = MathTex(r"y = y_0 + v_{0y}t + \frac{1}{2}gt^2").next_to(explanation_1, DOWN, buff=0.2).scale(0.8)
-        explanation_2 = Text("Bu formülde:", font_size=30).next_to(formula, DOWN, buff=0.2).scale(0.8)
-        variables = VGroup(
-            Tex(r"$y$, topun son yüksekliği (3.05 m)"),
-            Tex(r"$y_0$, topun ilk yüksekliği (2.40 m)"),
-            Tex(r"$v_{0y}$, topun ilk düşey hızı (6.88 m/s)"),
-            Tex(r"$t$, geçen süre (bulunacak)"),
-            Tex(r"$g$, yerçekimi ivmesi (-9.8 m/s²)")
-        ).arrange(DOWN, aligned_edge=LEFT).next_to(explanation_2, DOWN, buff=0.2).scale(0.8)
+        text = "Üçgenin tabanı BC'nin uzunluğu |(3 - 4/m1) - (3 - 4/m2)| = 4|m1 - m2|/|m1*m2|. m1*m2 = -1 olduğundan BC = 4|m1 - m2|. Üçgenin yüksekliği A noktasının y koordinatı olan 4. ABC üçgeninin alanı 1/2 * BC * 4 = 8|m1 - m2|."
 
-        with self.voiceover(text="Topun potaya ulaşması için geçen süreyi bulmak için düşey hareketi kullanacağız. Bunun için, serbest düşme hareketinin denklemini kullanabiliriz. Denklemimiz y eşittir y sıfır artı v sıfır y çarpı t artı 1/2 çarpı g çarpı t kare. Bu formülde, y topun son yüksekliği yani 3.05 metre, y sıfır topun ilk yüksekliği yani 2.40 metre, v sıfır y topun ilk düşey hızı yani 6.88 metre/saniye, t geçen süre yani bizim bulmak istediğimiz değer ve g yerçekimi ivmesi yani -9.8 metre/saniye karedir.") as tracker:
-            self.play(Write(title))
-            self.wait(1)
-            self.play(Write(explanation_1))
+        with self.voiceover(text=text) as tracker:
+            bc_length = MathTex(r"BC = 4|m_1 - m_2|").scale(0.8)
+            area = MathTex(r"Alan = 8|m_1 - m_2|").scale(0.8)
+
+            self.play(Create(bc_length))
             self.wait(3)
-            self.play(Write(formula))
+            self.play(bc_length.animate.shift(UP))
+            self.play(Create(area))
             self.wait(3)
-            self.play(Write(explanation_2))
-            self.wait(3)
-            for variable in variables:
-                self.play(Write(variable))
-                self.wait(2)
-            self.wait(2)
-            self.play(FadeOut(title, explanation_1, formula, explanation_2, *variables))
-            self.wait(1)
+        self.play(FadeOut(bc_length), FadeOut(area))
+
+
+
 
     def step_5(self):
-        title = Text("4. Adım: Yatay Mesafeyi Bulma", font_size=0.5).to_edge(UL).set_color(BLUE)
-        explanation = Text("Yatay mesafeyi (x) bulmak için:", font_size=30).next_to(title, DOWN, buff=0.2).scale(0.8)
-        formula = MathTex(r"x = v_{0x}t").next_to(explanation, DOWN, buff=0.2).scale(0.8)
-        reminder = Text("Burada 't' 3. adımda bulduğumuz süredir.", font_size=30).next_to(formula, DOWN, buff=0.2).scale(0.8)
+        text = "(m1-m2)^2 = (m1+m2)^2 - 4m1m2 = (3/2)^2 - 4(-1) = 25/4. Buradan |m1-m2| = 5/2. ABC üçgeninin alanı 8 * (5/2) = 20."
 
-        with self.voiceover(text="Son adımda ise, topun havada kalma süresini kullanarak yatay mesafeyi bulabiliriz. Yatay mesafe, yatay hız çarpı zaman formülü ile hesaplanır. Formülümüz x eşittir v sıfır x çarpı t. Burada t, bir önceki adımda bulduğumuz havada kalma süresidir. Hesalamayı tamamladığımızda, oyuncunun potadan olan uzaklığını yani x'i bulmuş olacağız.") as tracker:
-            self.play(Write(title))
-            self.wait(1)
-            self.play(Write(explanation))
+        with self.voiceover(text=text) as tracker:
+            m_diff_sq = MathTex(r"(m_1 - m_2)^2 = \frac{25}{4}").scale(0.8)
+            m_diff = MathTex(r"|m_1 - m_2| = \frac{5}{2}").scale(0.8)
+            final_area = MathTex(r"Alan = 20").scale(0.8).set_color(YELLOW)
+            
+            self.play(Create(m_diff_sq))
             self.wait(3)
-            self.play(Write(formula))
+            self.play(m_diff_sq.animate.shift(UP))
+            self.play(Create(m_diff))
             self.wait(3)
-            self.play(Write(reminder))
+            self.play(m_diff.animate.shift(UP))
+            self.play(Create(final_area))
             self.wait(3)
-            self.play(FadeOut(title, explanation, formula, reminder))
-            self.wait(1)
+
+            rect = SurroundingRectangle(final_area, color=YELLOW)
+            self.play(Create(rect))
+            self.wait(3)
+
+        self.play(FadeOut(m_diff_sq), FadeOut(m_diff), FadeOut(final_area), FadeOut(rect))
+
