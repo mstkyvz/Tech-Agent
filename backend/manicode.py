@@ -11,85 +11,71 @@ class Solution(VoiceoverScene):
         self.step_4()
         self.step_5()
 
-    def step_1(self):
-        text = "Problemimiz, A(3,4) noktasında dik kesişen iki doğrunun eğimleri toplamı 3/2 olarak verilmiş. Bu doğruların x eksenini kestiği noktalar B ve C. ABC üçgeninin alanını bulmamız gerekiyor."
-        with self.voiceover(text=text) as tracker:
-            problem = Tex(r"A(3,4) noktasında dik kesişen iki doğru \\ $m_1 + m_2 = \frac{3}{2}$, x-kesen noktaları B ve C. \\ ABC üçgeninin alanı nedir?").scale(0.8)
-            self.play(Create(problem))
-            self.wait(3)
-        self.play(FadeOut(problem))
 
+    def step_1(self):
+        text1 = Text("1. Soruyu Anlama", font_size=36).scale(0.8)
+        text2 = Text("İki sayının toplamı isteniyor.", font_size=24).scale(0.8)
+        text2.next_to(text1, DOWN)
+
+        with self.voiceover(text="İlk adımda, soruyu anlamaya çalışıyoruz.  Soruda bize iki sayının toplamını bulmamız isteniyor. Bu adımda, ne yapmamız gerektiğini tam olarak belirliyoruz.") as tracker:
+            self.play(Write(text1))
+            self.wait(0.5)
+            self.play(Write(text2))
+            self.wait(2.5)
+            self.play(FadeOut(text1), FadeOut(text2))
 
     def step_2(self):
-        text = "İki doğrumuz l1 ve l2 olsun. Eğimleri m1 ve m2. Doğrular dik kesiştikleri için m1 * m2 = -1. Ayrıca m1 + m2 = 3/2 verilmiş."
-        with self.voiceover(text=text) as tracker:
-            eq1 = MathTex(r"m_1 \cdot m_2 = -1").scale(0.8)
-            eq2 = MathTex(r"m_1 + m_2 = \frac{3}{2}").scale(0.8)
-            self.play(Create(eq1))
-            self.wait(3)
-            self.play(eq1.animate.shift(UP))
-            self.play(Create(eq2))
-            self.wait(3)
-        self.play(FadeOut(eq1), FadeOut(eq2))
+        text1 = Text("2. Verileri Belirleme", font_size=36).scale(0.8)
+        text2 = Text("Sayılar 2 ve 2'dir.", font_size=24).scale(0.8)
+        text2.next_to(text1, DOWN)
 
+        with self.voiceover(text="İkinci adımda, verileri belirliyoruz. Soruda bize verilen sayılar 2 ve 2'dir. Bu sayıları kullanarak toplama işlemini gerçekleştireceğiz.") as tracker:
+            self.play(Write(text1))
+            self.wait(0.5)
+            self.play(Write(text2))
+            self.wait(2.5)
+            self.play(FadeOut(text1), FadeOut(text2))
 
     def step_3(self):
-        text = "l1 doğrusunun denklemi y-4 = m1(x-3). x eksenini kestiği nokta B'yi bulmak için y=0 koyalım. Buradan x = 3 - 4/m1. Yani B noktası (3 - 4/m1, 0). Benzer şekilde l2 için C noktası (3 - 4/m2, 0)."
-
-        with self.voiceover(text=text) as tracker:
-            l1_eq = MathTex(r"l_1: y - 4 = m_1(x - 3)").scale(0.8)
-            b_point = MathTex(r"B = (3 - \frac{4}{m_1}, 0)").scale(0.8)
-            c_point = MathTex(r"C = (3 - \frac{4}{m_2}, 0)").scale(0.8)
-
-            self.play(Create(l1_eq))
-            self.wait(3)
-            self.play(l1_eq.animate.shift(UP))
-            self.play(Create(b_point))
-            self.wait(3)
-            self.play(b_point.animate.shift(UP))
-            self.play(Create(c_point))
-            self.wait(3)
-        self.play(FadeOut(l1_eq), FadeOut(b_point), FadeOut(c_point))
+        text1 = Text("3. Formül Seçimi", font_size=36).scale(0.8)
+        formula = MathTex("a + b = c").scale(0.8)
+        text2 = Text("Toplama işlemi kullanılacak.", font_size=24).scale(0.8)
+        text2.next_to(formula, DOWN)
+        formula.next_to(text1, DOWN)
 
 
+        with self.voiceover(text="Üçüncü adımda, kullanacağımız formülü seçiyoruz. Bu problemde, toplama işlemini kullanacağız. Formülümüz 'a + b = c' şeklindedir.  'a' ve 'b' toplanacak sayıları, 'c' ise toplamın sonucunu temsil eder.") as tracker:
+            self.play(Write(text1))
+            self.wait(0.5)
+            self.play(Write(formula))
+            self.play(Write(text2))
+            self.wait(2.5)
+            self.play(FadeOut(text1), FadeOut(formula), FadeOut(text2))
 
     def step_4(self):
-        text = "Üçgenin tabanı BC'nin uzunluğu |(3 - 4/m1) - (3 - 4/m2)| = 4|m1 - m2|/|m1*m2|. m1*m2 = -1 olduğundan BC = 4|m1 - m2|. Üçgenin yüksekliği A noktasının y koordinatı olan 4. ABC üçgeninin alanı 1/2 * BC * 4 = 8|m1 - m2|."
+        text1 = Text("4. Adım Adım Çözüm", font_size=36).scale(0.8)
+        formula = MathTex("2 + 2 = 4").scale(0.8)
+        formula.next_to(text1, DOWN)
+        box = SurroundingRectangle(formula, color=YELLOW)
 
-        with self.voiceover(text=text) as tracker:
-            bc_length = MathTex(r"BC = 4|m_1 - m_2|").scale(0.8)
-            area = MathTex(r"Alan = 8|m_1 - m_2|").scale(0.8)
-
-            self.play(Create(bc_length))
-            self.wait(3)
-            self.play(bc_length.animate.shift(UP))
-            self.play(Create(area))
-            self.wait(3)
-        self.play(FadeOut(bc_length), FadeOut(area))
-
-
+        with self.voiceover(text="Dördüncü adımda, adım adım çözüme geçiyoruz. 2 ve 2 sayılarını formülümüzde yerine koyuyoruz. 2 + 2 = 4.  Sonuç 4 olarak bulunur.") as tracker:
+            self.play(Write(text1))
+            self.wait(0.5)
+            self.play(Write(formula))
+            self.play(Create(box))
+            self.wait(2.5)
+            self.play(FadeOut(text1), FadeOut(formula), FadeOut(box))
 
 
     def step_5(self):
-        text = "(m1-m2)^2 = (m1+m2)^2 - 4m1m2 = (3/2)^2 - 4(-1) = 25/4. Buradan |m1-m2| = 5/2. ABC üçgeninin alanı 8 * (5/2) = 20."
+        text1 = Text("5. Sonuç", font_size=36).scale(0.8)
+        text2 = Text("Sonuç 4'tür.", font_size=36, color=GREEN).scale(0.8)
+        text2.next_to(text1, DOWN)
 
-        with self.voiceover(text=text) as tracker:
-            m_diff_sq = MathTex(r"(m_1 - m_2)^2 = \frac{25}{4}").scale(0.8)
-            m_diff = MathTex(r"|m_1 - m_2| = \frac{5}{2}").scale(0.8)
-            final_area = MathTex(r"Alan = 20").scale(0.8).set_color(YELLOW)
-            
-            self.play(Create(m_diff_sq))
-            self.wait(3)
-            self.play(m_diff_sq.animate.shift(UP))
-            self.play(Create(m_diff))
-            self.wait(3)
-            self.play(m_diff.animate.shift(UP))
-            self.play(Create(final_area))
-            self.wait(3)
+        with self.voiceover(text="Beşinci ve son adımda, sonucu yazıyoruz. 2 ile 2'nin toplamı 4'tür. İşlemimiz tamamlanmıştır.") as tracker:
+            self.play(Write(text1))
+            self.wait(0.5)
+            self.play(Write(text2))
+            self.wait(2.5)
 
-            rect = SurroundingRectangle(final_area, color=YELLOW)
-            self.play(Create(rect))
-            self.wait(3)
-
-        self.play(FadeOut(m_diff_sq), FadeOut(m_diff), FadeOut(final_area), FadeOut(rect))
 

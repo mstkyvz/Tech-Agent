@@ -35,7 +35,7 @@ const AppContent = () => {
             if (response.ok) {
                 const history = await response.json();
                 setCurrentChatHistory(history);
-                navigate(`/soru/${historyId}`); 
+                // navigate(`/soru/${historyId}`); 
                 
             }
         } catch (error) {
@@ -54,7 +54,26 @@ const AppContent = () => {
                 />
                 <div className="flex w-full bg-[#f9faff]">
                     <Routes>
-                        <Route path="/" element={<KonuAnlatim />} />
+                        
+                        
+                        <Route
+                            path="/konu"
+                            element={
+                                <KonuAnlatim
+                                    onHistorySaved={fetchChatHistories}
+                                />
+                            }
+                        />
+                        <Route
+                            path="/konu/:chatId"
+                            element={
+                                <KonuAnlatim
+                                    onHistorySaved={fetchChatHistories}
+                                    initialChatHistory={currentChatHistory?.messages || []}
+                                />
+                            }
+                        />
+
                         <Route
                             path="/soru"
                             element={
@@ -72,7 +91,6 @@ const AppContent = () => {
                                 />
                             }
                         />
-                        <Route path="/konu" element={<KonuAnlatim />} />
                     </Routes>
                 </div>
             </div>

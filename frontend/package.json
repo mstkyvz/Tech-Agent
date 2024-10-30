@@ -17,8 +17,12 @@
     "react-router-dom": "^6.27.0",
     "react-scripts": "5.0.1",
     "rehype-katex": "^7.0.1",
+    "rehype-parse": "^9.0.1",
+    "rehype-stringify": "^10.0.1",
     "remark-gfm": "^4.0.0",
+    "remark-html": "^16.0.1",
     "remark-math": "^6.0.0",
+    "unified": "^11.0.5",
     "web-vitals": "^2.1.4"
   },
   "scripts": {

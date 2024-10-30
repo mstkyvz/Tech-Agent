@@ -4,8 +4,9 @@ import { PDFDownloadLink, Document, Page, Text, View, StyleSheet, Image } from '
 import { Download } from 'lucide-react';
 import ChatHistory from './ChatHistory';
 import VideoModal from './VideoModel';
+import ImagePreview from './ImagePreview';
 
-// PDF styles
+
 const styles = StyleSheet.create({
   page: {
     padding: 30,
@@ -379,21 +380,23 @@ const QuestionArea = ({ onHistorySaved, initialChatHistory = [] }) => {
           <PDFDownloadLink
             document={<ChatPDF messages={chatHistory} />}
             fileName={`chat-${chatId}.pdf`}
-            className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded flex items-center gap-2"
+            className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-1 px-2 rounded-full flex items-center justify-center group"
           >
-            {({ blob, url, loading, error }) =>
-              loading ? (
-                'Loading...'
-              ) : (
-                <>
-                  <Download size={18} />
-                  PDF
-                </>
-              )
-            }
+            {({ blob, url, loading, error }) => (
+              <div className="flex items-center gap-1">
+                {loading ? (
+                  'Loading...'
+                ) : (
+                  <>
+                    <Download size={16} />
+                  </>
+                )}
+              </div>
+            )}
           </PDFDownloadLink>
         </div>
       );
+      
 
     return (
         <div className='relative flex flex-col w-full flex-1 justify-start items-center'>
@@ -410,6 +413,7 @@ const QuestionArea = ({ onHistorySaved, initialChatHistory = [] }) => {
                 <div ref={chatEndRef} />
             </div>
             <div className="flex flex-col items-center w-4/5 absolute bottom-0 bg-opacity-60">
+            <ImagePreview selectedImageRender={selectedImageRender} />
                 <div className="flex flex-col items-center mt-2 mb-5 w-3/5">
                     <div className="bg-white rounded-lg w-full h-2/12 md:h-[100px]"
                         onDragOver={handleDragOver}
@@ -428,6 +432,7 @@ const QuestionArea = ({ onHistorySaved, initialChatHistory = [] }) => {
                                 <input id="dropzone-file" type="file" className="hidden" onChange={handleImageChange} />
                             </label>
                         </div>
+                        
                     </div>
                     <div className="flex items-center w-full mt-1">
                         <input

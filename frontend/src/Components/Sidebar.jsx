@@ -3,14 +3,13 @@ import { MessageSquare, Settings, Book, PenTool, MessageCircle, X } from 'lucide
 
 const Sidebar = ({ isOpen, chatHistories = [], onHistorySelect }) => {
   const handleDelete = async (historyId, event) => {
-    event.stopPropagation(); // Prevent triggering the history selection
+    event.stopPropagation(); 
     try {
       const response = await fetch(`http://127.0.0.1:8000/delete_chat_history/${historyId}`, {
         method: 'DELETE',
       });
       
       if (response.ok) {
-        // Refresh the chat histories list
         if (onHistorySelect) {
           onHistorySelect(null);
         }
@@ -52,7 +51,7 @@ const Sidebar = ({ isOpen, chatHistories = [], onHistorySelect }) => {
           {chatHistories.length > 0 && (
             <li className="mt-4">
               <span className="text-sm text-gray-500 px-4 py-2 block">
-                Saved Questions
+                Chat History
               </span>
               <ul className="mt-2 overflow-y-auto">
                 {chatHistories.map((history) => (

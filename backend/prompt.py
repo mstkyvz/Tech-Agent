@@ -157,7 +157,7 @@ Görseli inceleyerek, içindeki sorunun çözümünü aşağıda verilen adımla
 
 NOTE: Her Stepte with self.voiceover kullanmayı unutma.
 NOTE: self.voiceover textleri uzun olsun tüm step i anlatsın. text uzunluğu en az 100 karakterden oluşsun 
-NOTE: Önemli yerleri renlendirerek önemini vurgula. örnek SurroundingRectangle kullanabilirsin.
+NOTE: Textleri renkli renkli yap
 ### Örnek Kod Yapısı:
 
 ```python

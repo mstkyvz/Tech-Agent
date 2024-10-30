@@ -1,17 +1,39 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { Download } from 'lucide-react';
 import ChatHistory from './ChatHistory';
+import VideoModal from './VideoModel';
+import ChatPDF from './ChatPDF';
+import { PDFDownloadLink } from '@react-pdf/renderer';
 
-const KonuAnlatim = () => {
-    const [selectedPDF, setSelectedPDF] = useState(null);
-    const [pdfName, setPdfName] = useState('');
+const KonuAnlatim = ({ onHistorySaved, initialChatHistory = [] }) => {
+    const navigate = useNavigate();
+    const { chatId } = useParams();
+    const [selectedPdf, setSelectedPdf] = useState(null);
+    const [selectedPdfRender, setSelectedPdfRender] = useState(null);
     const [message, setMessage] = useState('');
     const [chatHistory, setChatHistory] = useState(() => {
+        if (initialChatHistory.length > 0) {
+            return initialChatHistory;
+        }
         const saved = localStorage.getItem('chatHistory');
         return saved ? JSON.parse(saved) : [];
     });
     const [isLoading, setIsLoading] = useState(false);
     const [refreshingIndex, setRefreshingIndex] = useState(null);
     const chatEndRef = useRef(null);
+    const [chatHistories, setChatHistories] = useState([]);
+
+    useEffect(() => {
+        const initializeChatId = async () => {
+            if (!chatId && chatHistory.length === 0) {
+                const newChatId = await getNextChatId();
+                navigate(`/konu/${newChatId}`);
+            }
+        };
+        
+        initializeChatId();
+    }, [chatId, chatHistory, navigate]);
 
     useEffect(() => {
         localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
@@ -21,19 +43,25 @@ const KonuAnlatim = () => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [chatHistory]);
 
-    const handlePDFChange = (e) => {
+    useEffect(() => {
+        if (initialChatHistory.length > 0) {
+            setChatHistory(initialChatHistory);
+        }
+    }, [initialChatHistory]);
+
+    const handlePdfChange = (e) => {
         const file = e.target.files ? e.target.files[0] : e.dataTransfer.files[0];
         if (file) {
-            if (file.size > 10 * 1024 * 1024) { // 10MB limit
-                alert("File size should not exceed 10MB");
+            if (file.size > 5 * 1024 * 1024) {
+                alert("File size should not exceed 5MB");
                 return;
             }
-            if (file.type !== 'application/pdf') {
-                alert("Please upload a PDF file");
-                return;
-            }
-            setSelectedPDF(file);
-            setPdfName(file.name);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setSelectedPdfRender(reader.result);
+            };
+            reader.readAsDataURL(file);
+            setSelectedPdf(file);
         }
     };
 
@@ -42,105 +70,22 @@ const KonuAnlatim = () => {
         e.currentTarget.classList.add('border-blue-500');
     };
 
-    const handleDragLeave = (e) => {
-        e.preventDefault();
-        e.currentTarget.classList.remove('border-blue-500');
-    };
-
     const handleDrop = (e) => {
         e.preventDefault();
         e.currentTarget.classList.remove('border-blue-500');
-        handlePDFChange(e);
-    };
-
-    const processStream = async (response, messageIndex = null) => {
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let accumulatedResponse = '';
-
-        try {
-            while (true) {
-                const { value, done } = await reader.read();
-                if (done) break;
-                const chunk = decoder.decode(value);
-                accumulatedResponse += chunk;
-
-                setChatHistory(prev => {
-                    const newHistory = [...prev];
-                    const updateIndex = messageIndex !== null ? messageIndex : newHistory.length - 1;
-                    if (updateIndex >= 0) {
-                        newHistory[updateIndex] = {
-                            ...newHistory[updateIndex],
-                            content: accumulatedResponse
-                        };
-                    }
-                    return newHistory;
-                });
-            }
-        } catch (error) {
-            console.error('Error processing stream:', error);
-            throw error;
-        }
-    };
-
-    const handleRefreshMessage = async (index) => {
-        if (isLoading || refreshingIndex !== null) return;
-        
-        setRefreshingIndex(index);
-        
-        const userMessage = chatHistory[index - 1]; 
-        if (!userMessage) return;
-
-        const formData = new FormData();
-        formData.append('message', userMessage.content || '');
-        if (userMessage.pdf) {
-            const response = await fetch(userMessage.pdf);
-            const blob = await response.blob();
-            formData.append('file', blob, 'document.pdf');
-        }
-
-        const previousMessages = chatHistory.slice(Math.max(0, index - 5), index); 
-        formData.append('history', JSON.stringify(previousMessages));
-
-        try {
-            const response = await fetch('http://127.0.0.1:8000/chat_konu/', {
-                method: 'POST',
-                body: formData,
-            });
-
-            if (!response.ok) {
-                throw new Error(await response.text());
-            }
-
-            await processStream(response, index);
-
-        } catch (error) {
-            console.error("Error:", error);
-            setChatHistory(prev => {
-                const newHistory = [...prev];
-                newHistory[index] = {
-                    type: 'error',
-                    content: error.message,
-                    timestamp: new Date().toISOString()
-                };
-                return newHistory;
-            });
-        } finally {
-            setRefreshingIndex(null);
-        }
+        handlePdfChange(e);
     };
 
     const handleSendMessage = async () => {
-        if (!message && !selectedPDF) {
-            alert("Please enter a message or select a PDF file.");
+        if (!message && !selectedPdf) {
+            alert("Please enter a message or select a PDF.");
             return;
         }
 
         const userMessage = {
             type: 'user',
             content: message || '',
-            pdf: selectedPDF ? URL.createObjectURL(selectedPDF) : null,
-            pdfName: pdfName,
+            pdf: selectedPdfRender,
             timestamp: new Date().toISOString()
         };
 
@@ -148,8 +93,8 @@ const KonuAnlatim = () => {
 
         const formData = new FormData();
         formData.append('message', message || '');
-        if (selectedPDF) {
-            formData.append('file', selectedPDF, selectedPDF.name);
+        if (selectedPdf) {
+            formData.append('file', selectedPdf);
         }
 
         const lastMessages = chatHistory.slice(-5);
@@ -185,39 +130,212 @@ const KonuAnlatim = () => {
         } finally {
             setIsLoading(false);
             setMessage('');
-            setSelectedPDF(null);
-            setPdfName('');
+            setSelectedPdf(null);
+            setSelectedPdfRender(null);
         }
     };
 
+    const handleRefreshMessage = async (index) => {
+        if (isLoading || refreshingIndex !== null) return;
+        
+        setRefreshingIndex(index);
+        
+        const userMessage = chatHistory[index - 1]; 
+        if (!userMessage) return;
+
+        const formData = new FormData();
+        formData.append('message', userMessage.content || '');
+        if (userMessage.pdf) {
+           
+            const response = await fetch(userMessage.pdf);
+            const blob = await response.blob();
+            formData.append('file', blob);
+        }
+
+
+        const previousMessages = chatHistory.slice(Math.max(0, index - 5), index); 
+        formData.append('history', JSON.stringify(previousMessages));
+
+        try {
+            const response = await fetch('http://127.0.0.1:8000/chat_konu/', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                throw new Error(await response.text());
+            }
+
+            await processStream(response, index);
+
+        } catch (error) {
+            console.error("Error:", error);
+            setChatHistory(prev => {
+                const newHistory = [...prev];
+                newHistory[index] = {
+                    type: 'error',
+                    content: error.message,
+                    timestamp: new Date().toISOString()
+                };
+                return newHistory;
+            });
+        } finally {
+            setRefreshingIndex(null);
+        }
+    };
+
+    const processStream = async (response, messageIndex = null) => {
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let accumulatedResponse = '';
+
+        try {
+            while (true) {
+                const { value, done } = await reader.read();
+
+                if (done){
+                    saveChatHistory();
+                    break;
+                }
+
+                const chunk = decoder.decode(value);
+                accumulatedResponse += chunk;
+
+                setChatHistory(prev => {
+                    const newHistory = [...prev];
+                    const updateIndex = messageIndex !== null ? messageIndex : newHistory.length - 1;
+                    if (updateIndex >= 0) {
+                        newHistory[updateIndex] = {
+                            ...newHistory[updateIndex],
+                            content: accumulatedResponse
+                        };
+                    }
+                    
+                    return newHistory;
+                });
+            }
+        } catch (error) {
+            console.error('Error processing stream:', error);
+            throw error;
+        }
+    };
+
+    const fetchChatHistories = async () => {
+        try {
+            const response = await fetch('http://127.0.0.1:8000/get_all_histories/');
+            if (response.ok) {
+                const histories = await response.json();
+                setChatHistories(histories);
+            }
+        } catch (error) {
+            console.error('Error fetching chat histories:', error);
+        }
+    };
+
+    const saveChatHistory = async () => {
+        if (chatHistory.length === 0) return;
+
+        const autoTitle = chatId;
+        const currentChatId = chatId ;
+
+        try {
+            const response = await fetch('http://127.0.0.1:8000/save_chat_history/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    id: autoTitle,
+                    title: autoTitle,
+                    messages: chatHistory
+                }),
+            });
+
+            if (response.ok) {
+                console.log('Chat history saved successfully!');
+                if (onHistorySaved) {
+                    onHistorySaved();
+                }
+                if (!chatId) {
+                    const newChatId = await getNextChatId();
+                    navigate(`/konu/${newChatId}`);
+                }
+            } else {
+                throw new Error('Failed to save chat history');
+            }
+        } catch (error) {
+            console.error('Error saving chat history:', error);
+        }
+    };
+    
     const handleKeyPress = (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             handleSendMessage();
         }
     };
+    const clearChat = async () => {
+        await saveChatHistory();
+        setChatHistory([]);
+        localStorage.removeItem('chatHistory');
+        const newChatId = await getNextChatId();
+        navigate(`/konu/${newChatId}`);
+    };
 
-    const clearChat = () => {
-        if (window.confirm('Are you sure you want to clear the chat history?')) {
-            setChatHistory([]);
-            localStorage.removeItem('chatHistory');
+    const getNextChatId = async () => {
+        try {
+            const response = await fetch('http://127.0.0.1:8000/get_all_histories/');
+            if (response.ok) {
+                const histories = await response.json();
+                if (histories.length === 0) return '1';
+                
+                const numericIds = histories
+                    .map(history => parseInt(history.id))
+                    .filter(id => !isNaN(id));
+                
+                const maxId = Math.max(...numericIds, 0);
+                return (maxId + 1).toString();
+            }
+            return '1';
+        } catch (error) {
+            console.error('Error fetching histories:', error);
+            return '1';
         }
     };
 
+    const ExportButton = () => (
+        <div className="absolute top-4 right-4">
+          <PDFDownloadLink
+            document={<ChatPDF messages={chatHistory} />}
+            fileName={`chat-${chatId}.pdf`}
+            className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-1 px-2 rounded-full flex items-center justify-center group"
+          >
+            {({ blob, url, loading, error }) => (
+              <div className="flex items-center gap-1">
+                {loading ? (
+                  'Loading...'
+                ) : (
+                  <>
+                    <Download size={16} />
+                  </>
+                )}
+              </div>
+            )}
+          </PDFDownloadLink>
+        </div>
+      );
+
     return (
         <div className='relative flex flex-col w-full flex-1 justify-start items-center'>
+            <div className='z-50 absolute right-0  border-r-8'>
+            <ExportButton />
+            </div>
             <div className="mx-auto flex-1 w-full items-start justify-center overflow-y-auto mb-48">
                 <div className="flex w-full px-10">
                     <ChatHistory 
                         messages={chatHistory} 
                         onRefreshMessage={handleRefreshMessage}
                     />
-                    <button
-                        onClick={clearChat}
-                        className="absolute top-4 right-4 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-                    >
-                        Clear Chat
-                    </button>
                 </div>
                 <div ref={chatEndRef} />
             </div>
@@ -233,19 +351,11 @@ const KonuAnlatim = () => {
                                         <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
                                     </svg>
                                     <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
-                                        <span className="font-semibold">
-                                            {pdfName ? `Selected: ${pdfName}` : 'Drag & drop or click here to upload a PDF file'}
-                                        </span>
+                                        <span className="font-semibold">Drag & drop or click here to upload a PDF</span>
                                     </p>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">PDF files only (max 10MB)</p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">PDF</p>
                                 </div>
-                                <input 
-                                    id="dropzone-file" 
-                                    type="file" 
-                                    className="hidden" 
-                                    onChange={handlePDFChange}
-                                    accept=".pdf"
-                                />
+                                <input id="dropzone-file" type="file" className="hidden" onChange={handlePdfChange} />
                             </label>
                         </div>
                     </div>
@@ -276,7 +386,20 @@ const KonuAnlatim = () => {
                                 </svg>
                             )}
                         </button>
+                        <div className="w-3/12">
+                            <button
+                                onClick={clearChat}
+                                className="bg-gray-500 hover:bg-gray-600 text-white text-sm font-bold py-[10px] px-4 rounded"
+                            >
+                                Yeni Sohbet
+                            </button>
+                        </div>
                     </div>
+                </div>
+            </div>
+            <div className="flex items-center justify-center w-3/12 h-48 right-0 m-2 absolute bottom-0">
+                <div className='flex items-center justify-center w-24 h-24'>
+                    <VideoModal id={`${chatId}`} saveChatHistory={saveChatHistory} />        
                 </div>
             </div>
         </div>

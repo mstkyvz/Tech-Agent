@@ -114,7 +114,7 @@ async def run(chat_id):
         messages, images = processor.process_messages(chat_messages)
         prompt_manim = prompt.manim_prompt.format(messages)
         
-        response = generate_response.generate_response_with_image(prompt_manim, images[0] if images else None)
+        response = generate_response.generate_response_with_image(prompt_manim, images[0] if images!=[] else None)
         print(messages)
         config.media_dir="../frontend/public/media"
         config.output_file = f"{chat_id}"
@@ -131,7 +131,7 @@ async def run(chat_id):
                 save_and_run_manim_code(manim_code)
                 break
             except Exception as e:
-                response = generate_response.generate_response_with_image(prompt_manim, images[0] if images else None)
+                response = generate_response.generate_response_with_image(prompt_manim, images[0] if images!=[] else None)
                 print("-----" * 30)
                 print(e)
 

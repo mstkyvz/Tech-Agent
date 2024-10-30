@@ -21,7 +21,6 @@ import os
 import models
 import schemas
 from database import SessionLocal, engine
-
 import create_videos
 
 models.Base.metadata.create_all(bind=engine)
@@ -80,8 +79,11 @@ def create_content_parts(message: str, image_data: Optional[bytes] = None) -> Li
     
     return genai.protos.Content(parts=parts)
 
-def build_prompt(message: str, history: List[dict]) -> List[Dict[str, Any]]:
-    messages = [{'role':'user','parts':prompt.system_prompt_question}]
+def build_prompt(message: str, history: List[dict],types) -> List[Dict[str, Any]]:
+    if types=="question":
+        messages = [{'role':'user','parts':prompt.system_prompt_question}]
+    else:
+        messages = [{'role':'user','parts':prompt.system_prompt_konu}]
     
     for msg in history:
         role = "user" if msg['type'] == 'user' else "model"
@@ -97,9 +99,9 @@ def build_prompt(message: str, history: List[dict]) -> List[Dict[str, Any]]:
     
     return messages
 
-async def send_message(message: str, history: List[dict], image_data: Optional[bytes] = None):
+async def send_message(message: str, history: List[dict], image_data: Optional[bytes] = None,types="quesiton"):
     try:
-        content = build_prompt(message, history)
+        content = build_prompt(message, history,types)
 
         if image_data:
             content_parts = create_content_parts(message, image_data)
@@ -141,6 +143,36 @@ async def chat_endpoint(
         raise HTTPException(status_code=400, detail="Invalid history format")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
+    
+    
+@app.post("/chat_konu/")
+async def chat_endpoint(
+    message: str = Form(...),
+    file: Optional[UploadFile] = File(None),
+    history: str = Form(default="[]")
+) -> StreamingResponse:
+    try:
+        chat_history = json.loads(history)
+        
+        contents = None
+        if file:
+            if not file.content_type.startswith('image/'):
+                raise HTTPException(status_code=400, detail="Only image files are supported")
+            contents = await file.read()
+            
+        async def stream_response():
+            async for chunk in send_message(message, chat_history, contents,"konu"):
+                yield chunk.encode('utf-8')
+        
+        return StreamingResponse(
+            stream_response(),
+            media_type="text/plain"
+        )
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid history format")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
+
 
 def calculate_chat_hash(messages: List[Dict]) -> str:
     """
@@ -159,6 +191,7 @@ def calculate_chat_hash(messages: List[Dict]) -> str:
     message_str = json.dumps(hash_content, sort_keys=True)
     return hashlib.sha256(message_str.encode()).hexdigest()
 
+
 @app.post("/save_chat_history/", response_model=schemas.ChatHistoryResponse)
 async def save_chat_history(
     chat_history: schemas.ChatHistoryCreate,
@@ -166,14 +199,12 @@ async def save_chat_history(
 ):
     messages_hash = calculate_chat_hash(chat_history.messages)
     
-    # Aynı title'a sahip kaydı kontrol et
     existing_chat = db.query(models.ChatHistory).filter(
         models.ChatHistory.title == chat_history.title
     ).first()
     
     if existing_chat:
         try:
-            # Mevcut kaydı güncelle
             existing_chat.messages = json.dumps(chat_history.messages)
             existing_chat.messages_hash = messages_hash
             db.commit()
@@ -187,7 +218,6 @@ async def save_chat_history(
                 detail=f"Error updating chat history: {str(e)}"
             )
     
-    # Yeni kayıt oluştur
     db_chat_history = models.ChatHistory(
         id=chat_history.title,
         title=chat_history.title,
