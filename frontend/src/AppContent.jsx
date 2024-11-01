@@ -4,7 +4,11 @@ import Navbar from './Components/Navbar';
 import Sidebar from './Components/Sidebar';
 import QuestionArea from './Components/QuestionArea';
 import KonuAnlatim from './Components/KonuAnlatim';
+import PodCast from './Components/PodCast';
 import './App.css';
+import CreateQuestion from './Components/CreateQuestion';
+
+import config from './config.json';
 
 const AppContent = () => {
     const [isOpen, setIsOpen] = useState(true);
@@ -12,14 +16,14 @@ const AppContent = () => {
     const [currentChatHistory, setCurrentChatHistory] = useState(null);
     const navigate = useNavigate();
     const toggleSidebar = () => setIsOpen(!isOpen);
-
+    
     useEffect(() => {
         fetchChatHistories();
     }, []);
 
     const fetchChatHistories = async () => {
         try {
-            const response = await fetch('http://127.0.0.1:8000/get_all_histories/');
+            const response = await fetch(`${config.apiUrl}/get_all_histories/`);
             if (response.ok) {
                 const data = await response.json();
                 setChatHistories(data);
@@ -31,17 +35,16 @@ const AppContent = () => {
 
     const handleHistorySelect = async (historyId) => {
         try {
-            const response = await fetch(`http://127.0.0.1:8000/get_chat_history/${historyId}`);
+            const response = await fetch(`${config.apiUrl}/get_chat_history/${historyId}`);
             if (response.ok) {
                 const history = await response.json();
                 setCurrentChatHistory(history);
-                // navigate(`/soru/${historyId}`); 
-                
+                navigate(`/soru/${historyId}`);
             }
         } catch (error) {
             console.error('Error loading chat history:', error);
         }
-    };  
+    };
 
     return (
         <div className="flex flex-col">
@@ -54,14 +57,10 @@ const AppContent = () => {
                 />
                 <div className="flex w-full bg-[#f9faff]">
                     <Routes>
-                        
-                        
                         <Route
                             path="/konu"
                             element={
-                                <KonuAnlatim
-                                    onHistorySaved={fetchChatHistories}
-                                />
+                                <KonuAnlatim onHistorySaved={fetchChatHistories} />
                             }
                         />
                         <Route
@@ -73,13 +72,10 @@ const AppContent = () => {
                                 />
                             }
                         />
-
                         <Route
                             path="/soru"
                             element={
-                                <QuestionArea
-                                    onHistorySaved={fetchChatHistories}
-                                />
+                                <QuestionArea onHistorySaved={fetchChatHistories} />
                             }
                         />
                         <Route
@@ -91,6 +87,25 @@ const AppContent = () => {
                                 />
                             }
                         />
+                        <Route
+                            path="/soruolustur"
+                            element={
+                                <CreateQuestion onHistorySaved={fetchChatHistories} />
+                            }
+                        />
+                        <Route
+                            path="/soruolustur/:chatId"
+                            element={
+                                <CreateQuestion
+                                    onHistorySaved={fetchChatHistories}
+                                    initialChatHistory={currentChatHistory?.messages || []}
+                                />
+                            }
+                        />
+                        <Route
+                            path="/podcast"
+                            element={<PodCast />}
+                        />
                     </Routes>
                 </div>
             </div>
@@ -99,5 +114,3 @@ const AppContent = () => {
 };
 
 export default AppContent;
-
-

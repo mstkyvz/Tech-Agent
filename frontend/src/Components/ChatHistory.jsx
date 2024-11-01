@@ -48,10 +48,10 @@ const ChatHistory = ({ messages, onRefreshMessage }) => {
             {messages.map((message, index) => (
                 <div 
                     key={index} 
-                    className={`flex  w-full ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                    className={`flex w-full ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                     <div 
-                        className={`relative  max-w-[70%] rounded-lg p-6 shadow-md
+                        className={`relative max-w-[70%] rounded-lg p-6 shadow-md
                             ${message.type === 'user' 
                                 ? 'bg-gray-200 text-black ml-auto rounded-br-none' 
                                 : message.type === 'error' 
@@ -62,7 +62,7 @@ const ChatHistory = ({ messages, onRefreshMessage }) => {
                         {message.type !== 'user' && (
                             <button
                                 onClick={() => onRefreshMessage(index)}
-                                className="absolute top-2 right-2 p-1  rounded-full hover:bg-gray-200 transition-colors"
+                                className="absolute top-2 right-2 p-1 rounded-full hover:bg-gray-200 transition-colors"
                                 title="Refresh response"
                             >
                                 <RotateCw size={16} className="text-gray-600" />

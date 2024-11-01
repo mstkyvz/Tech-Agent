@@ -2,6 +2,7 @@ from typing import AsyncIterable, List, Optional, Dict, Any
 from pydantic import BaseModel
 from fastapi import FastAPI, Form, UploadFile, File, HTTPException
 from fastapi.responses import StreamingResponse
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 import google.generativeai as genai
 from PIL import Image
@@ -22,10 +23,13 @@ import models
 import schemas
 from database import SessionLocal, engine
 import create_videos
+from generate_auido import generate_audio
+from fastapi.staticfiles import StaticFiles
 
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 def get_db():
     db = SessionLocal()
@@ -82,6 +86,8 @@ def create_content_parts(message: str, image_data: Optional[bytes] = None) -> Li
 def build_prompt(message: str, history: List[dict],types) -> List[Dict[str, Any]]:
     if types=="question":
         messages = [{'role':'user','parts':prompt.system_prompt_question}]
+    elif types=="create_question":
+        messages = [{'role':'user','parts':prompt.system_prompt_question}]
     else:
         messages = [{'role':'user','parts':prompt.system_prompt_konu}]
     
@@ -99,7 +105,7 @@ def build_prompt(message: str, history: List[dict],types) -> List[Dict[str, Any]
     
     return messages
 
-async def send_message(message: str, history: List[dict], image_data: Optional[bytes] = None,types="quesiton"):
+async def send_message(message: str, history: List[dict], image_data: Optional[bytes] = None,types="question"):
     try:
         content = build_prompt(message, history,types)
 
@@ -133,6 +139,35 @@ async def chat_endpoint(
             
         async def stream_response():
             async for chunk in send_message(message, chat_history, contents):
+                yield chunk.encode('utf-8')
+        
+        return StreamingResponse(
+            stream_response(),
+            media_type="text/plain"
+        )
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid history format")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
+    
+    
+@app.post("/chat_create_question/")
+async def chat_endpoint(
+    message: str = Form(...),
+    file: Optional[UploadFile] = File(None),
+    history: str = Form(default="[]")
+) -> StreamingResponse:
+    try:
+        chat_history = json.loads(history)
+        
+        contents = None
+        if file:
+            if not file.content_type.startswith('image/'):
+                raise HTTPException(status_code=400, detail="Only image files are supported")
+            contents = await file.read()
+            
+        async def stream_response():
+            async for chunk in send_message(message, chat_history, contents,"create_question"):
                 yield chunk.encode('utf-8')
         
         return StreamingResponse(
@@ -388,6 +423,22 @@ async def delete_video(video_id: str):
     del video_database[video_id]
     return {"message": "Video deleted successfully"}
 
+
+
+
+@app.post("/upload-pdf/")
+async def upload_pdf(file: UploadFile = File(...)):
+
+    with open("temp.pdf", "wb") as buffer:
+        buffer.write(await file.read())
+    
+    audio_file_path = generate_audio("temp.pdf")
+    
+    return {"audio_file": audio_file_path}
+
+@app.get("/audio/{filename}")
+async def get_audio(filename: str):
+    return FileResponse(f"/static/tmp/{filename}", media_type="audio/mpeg")
 
 
 

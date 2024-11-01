@@ -11,71 +11,62 @@ class Solution(VoiceoverScene):
         self.step_4()
         self.step_5()
 
-
     def step_1(self):
-        text1 = Text("1. Soruyu Anlama", font_size=36).scale(0.8)
-        text2 = Text("İki sayının toplamı isteniyor.", font_size=24).scale(0.8)
-        text2.next_to(text1, DOWN)
+        baslik = Text("Aktivasyon Fonksiyonları: Sigmoid vs. ReLU", font_size=36, color=BLUE).scale(0.8)
+        with self.voiceover(text="Merhaba! Bu videoda, yapay sinir ağlarında kullanılan iki önemli aktivasyon fonksiyonu olan Sigmoid ve ReLU arasındaki farkları inceleyeceğiz. Aktivasyon fonksiyonları, bir nöronun girdisini alıp bir çıktı üretmek için kullanılır. Bu çıktı, ağın bir sonraki katmanına iletilir.") as tracker:
+            self.play(Write(baslik))
+            self.wait(3)
+        self.play(FadeOut(baslik))
 
-        with self.voiceover(text="İlk adımda, soruyu anlamaya çalışıyoruz.  Soruda bize iki sayının toplamını bulmamız isteniyor. Bu adımda, ne yapmamız gerektiğini tam olarak belirliyoruz.") as tracker:
-            self.play(Write(text1))
-            self.wait(0.5)
-            self.play(Write(text2))
-            self.wait(2.5)
-            self.play(FadeOut(text1), FadeOut(text2))
 
     def step_2(self):
-        text1 = Text("2. Verileri Belirleme", font_size=36).scale(0.8)
-        text2 = Text("Sayılar 2 ve 2'dir.", font_size=24).scale(0.8)
-        text2.next_to(text1, DOWN)
+        sigmoid_formul = MathTex(r"f(x) = \frac{1}{1 + e^{-x}}", color=RED).scale(0.8)
+        relu_formul = MathTex(r"f(x) = max(0, x)", color=GREEN).scale(0.8)
 
-        with self.voiceover(text="İkinci adımda, verileri belirliyoruz. Soruda bize verilen sayılar 2 ve 2'dir. Bu sayıları kullanarak toplama işlemini gerçekleştireceğiz.") as tracker:
-            self.play(Write(text1))
-            self.wait(0.5)
-            self.play(Write(text2))
-            self.wait(2.5)
-            self.play(FadeOut(text1), FadeOut(text2))
+        with self.voiceover(text="İlk olarak, Sigmoid fonksiyonunu ele alalım. Sigmoid fonksiyonu, girdiyi 0 ile 1 arasında bir değere sıkıştırır. Formülü şu şekildedir:  1 bölü 1 artı e üzeri eksi x.  ReLU fonksiyonu ise negatif girdileri 0'a, pozitif girdileri ise kendilerine eşitler. Formülü, maksimum 0 ve x'dir.") as tracker:
+            self.play(Write(sigmoid_formul))
+            self.wait(3)
+            self.play(sigmoid_formul.animate.shift(UP*2))
+            self.play(Write(relu_formul))
+            self.wait(3)
+        self.play(FadeOut(sigmoid_formul), FadeOut(relu_formul))
 
     def step_3(self):
-        text1 = Text("3. Formül Seçimi", font_size=36).scale(0.8)
-        formula = MathTex("a + b = c").scale(0.8)
-        text2 = Text("Toplama işlemi kullanılacak.", font_size=24).scale(0.8)
-        text2.next_to(formula, DOWN)
-        formula.next_to(text1, DOWN)
+        sigmoid_grafik = FunctionGraph(lambda x: 1 / (1 + np.exp(-x)), x_range=[-5, 5], color=RED).scale(0.8)
+        relu_grafik = FunctionGraph(lambda x: max(0, x), x_range=[-5, 5], color=GREEN).scale(0.8)
+        
+        with self.voiceover(text="Sigmoid fonksiyonunun grafiği, S şeklinde bir eğridir ve girdiler arttıkça 1'e, azaldıkça 0'a yaklaşır. ReLU fonksiyonunun grafiği ise, x ekseni boyunca 0'da sabittir ve pozitif x değerleri için doğrusal olarak artar.") as tracker:
+            self.play(Create(sigmoid_grafik))
+            self.wait(3)
+            self.play(sigmoid_grafik.animate.shift(UP*2))
+            self.play(Create(relu_grafik))
+            self.wait(3)
+        self.play(FadeOut(sigmoid_grafik), FadeOut(relu_grafik))
 
-
-        with self.voiceover(text="Üçüncü adımda, kullanacağımız formülü seçiyoruz. Bu problemde, toplama işlemini kullanacağız. Formülümüz 'a + b = c' şeklindedir.  'a' ve 'b' toplanacak sayıları, 'c' ise toplamın sonucunu temsil eder.") as tracker:
-            self.play(Write(text1))
-            self.wait(0.5)
-            self.play(Write(formula))
-            self.play(Write(text2))
-            self.wait(2.5)
-            self.play(FadeOut(text1), FadeOut(formula), FadeOut(text2))
 
     def step_4(self):
-        text1 = Text("4. Adım Adım Çözüm", font_size=36).scale(0.8)
-        formula = MathTex("2 + 2 = 4").scale(0.8)
-        formula.next_to(text1, DOWN)
-        box = SurroundingRectangle(formula, color=YELLOW)
+        ornek1 = MathTex(r"\text{Sigmoid: } f(2) \approx 0.88, \ f(-1) \approx 0.27", color=PINK).scale(0.8)
+        ornek2 = MathTex(r"\text{ReLU: } f(2) = 2, \ f(-1) = 0", color=PURPLE).scale(0.8)
 
-        with self.voiceover(text="Dördüncü adımda, adım adım çözüme geçiyoruz. 2 ve 2 sayılarını formülümüzde yerine koyuyoruz. 2 + 2 = 4.  Sonuç 4 olarak bulunur.") as tracker:
-            self.play(Write(text1))
-            self.wait(0.5)
-            self.play(Write(formula))
-            self.play(Create(box))
-            self.wait(2.5)
-            self.play(FadeOut(text1), FadeOut(formula), FadeOut(box))
+        with self.voiceover(text="Örneklerle açıklayalım. Sigmoid fonksiyonunda, girdi 2 olduğunda çıktı yaklaşık 0.88, girdi -1 olduğunda ise yaklaşık 0.27'dir. ReLU fonksiyonunda ise, girdi 2 olduğunda çıktı 2, girdi -1 olduğunda ise çıktı 0'dır.") as tracker:
+            self.play(Write(ornek1))
+            self.wait(3)
+            self.play(ornek1.animate.shift(UP*2))
+            self.play(Write(ornek2))
+            self.wait(3)
+        self.play(FadeOut(ornek1), FadeOut(ornek2))
 
 
     def step_5(self):
-        text1 = Text("5. Sonuç", font_size=36).scale(0.8)
-        text2 = Text("Sonuç 4'tür.", font_size=36, color=GREEN).scale(0.8)
-        text2.next_to(text1, DOWN)
+        sonuc = Text("Sonuç:", font_size=36, color=BLACK).scale(0.8)
+        aciklama = Text("ReLU, genellikle daha hızlı öğrenme sağlar.", font_size=24, color=BLUE).scale(0.8)
 
-        with self.voiceover(text="Beşinci ve son adımda, sonucu yazıyoruz. 2 ile 2'nin toplamı 4'tür. İşlemimiz tamamlanmıştır.") as tracker:
-            self.play(Write(text1))
-            self.wait(0.5)
-            self.play(Write(text2))
-            self.wait(2.5)
+
+        with self.voiceover(text="Sonuç olarak, Sigmoid fonksiyonu olasılık tahmini için uygunken, ReLU genellikle daha hızlı öğrenme sağlar ve derin ağlarda kaybolan gradyan problemini azaltmada etkilidir.  Seçim, spesifik uygulamaya ve ağ mimarisine bağlıdır.") as tracker:
+            self.play(Write(sonuc))
+            self.wait(3)
+            self.play(sonuc.animate.shift(UP*2))
+            self.play(Write(aciklama))
+            self.wait(3)
 
 

@@ -4,7 +4,8 @@ import { Download } from 'lucide-react';
 import ChatHistory from './ChatHistory';
 import VideoModal from './VideoModel';
 import ChatPDF from './ChatPDF';
-import { PDFDownloadLink } from '@react-pdf/renderer';
+import { PDFDownloadLink} from '@react-pdf/renderer';
+import config from '../config.json'; 
 
 const KonuAnlatim = ({ onHistorySaved, initialChatHistory = [] }) => {
     const navigate = useNavigate();
@@ -103,7 +104,7 @@ const KonuAnlatim = ({ onHistorySaved, initialChatHistory = [] }) => {
         setIsLoading(true);
 
         try {
-            const response = await fetch('http://127.0.0.1:8000/chat_konu/', {
+            const response = await fetch(`${config.apiUrl}/chat_konu/`, {
                 method: 'POST',
                 body: formData,
             });
@@ -157,7 +158,7 @@ const KonuAnlatim = ({ onHistorySaved, initialChatHistory = [] }) => {
         formData.append('history', JSON.stringify(previousMessages));
 
         try {
-            const response = await fetch('http://127.0.0.1:8000/chat_konu/', {
+            const response = await fetch(`${config.apiUrl}/chat_konu/`, {
                 method: 'POST',
                 body: formData,
             });
@@ -222,7 +223,7 @@ const KonuAnlatim = ({ onHistorySaved, initialChatHistory = [] }) => {
 
     const fetchChatHistories = async () => {
         try {
-            const response = await fetch('http://127.0.0.1:8000/get_all_histories/');
+            const response = await fetch(`${config.apiUrl}/get_all_histories/`);
             if (response.ok) {
                 const histories = await response.json();
                 setChatHistories(histories);
@@ -239,7 +240,7 @@ const KonuAnlatim = ({ onHistorySaved, initialChatHistory = [] }) => {
         const currentChatId = chatId ;
 
         try {
-            const response = await fetch('http://127.0.0.1:8000/save_chat_history/', {
+            const response = await fetch(`${config.apiUrl}/save_chat_history/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -284,7 +285,7 @@ const KonuAnlatim = ({ onHistorySaved, initialChatHistory = [] }) => {
 
     const getNextChatId = async () => {
         try {
-            const response = await fetch('http://127.0.0.1:8000/get_all_histories/');
+            const response = await fetch(`${config.apiUrl}/get_all_histories/`);
             if (response.ok) {
                 const histories = await response.json();
                 if (histories.length === 0) return '1';
@@ -306,28 +307,22 @@ const KonuAnlatim = ({ onHistorySaved, initialChatHistory = [] }) => {
     const ExportButton = () => (
         <div className="absolute top-4 right-4">
           <PDFDownloadLink
-            document={<ChatPDF messages={chatHistory} />}
+            document={<ChatPDF messages={chatHistory} chatId={chatId} />}
             fileName={`chat-${chatId}.pdf`}
             className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-1 px-2 rounded-full flex items-center justify-center group"
           >
-            {({ blob, url, loading, error }) => (
+            {({ loading }) => (
               <div className="flex items-center gap-1">
-                {loading ? (
-                  'Loading...'
-                ) : (
-                  <>
-                    <Download size={16} />
-                  </>
-                )}
+                {loading ? 'Loading...' : <Download size={16} />}
               </div>
             )}
           </PDFDownloadLink>
         </div>
       );
-
     return (
         <div className='relative flex flex-col w-full flex-1 justify-start items-center'>
             <div className='z-50 absolute right-0  border-r-8'>
+            
             <ExportButton />
             </div>
             <div className="mx-auto flex-1 w-full items-start justify-center overflow-y-auto mb-48">

@@ -1,11 +1,12 @@
 import React from 'react';
 import { MessageSquare, Settings, Book, PenTool, MessageCircle, X } from 'lucide-react';
+import config from '../config.json'; 
 
 const Sidebar = ({ isOpen, chatHistories = [], onHistorySelect }) => {
   const handleDelete = async (historyId, event) => {
     event.stopPropagation(); 
     try {
-      const response = await fetch(`http://127.0.0.1:8000/delete_chat_history/${historyId}`, {
+      const response = await fetch(`${config.apiUrl}/delete_chat_history/${historyId}`, {
         method: 'DELETE',
       });
       
@@ -36,7 +37,7 @@ const Sidebar = ({ isOpen, chatHistories = [], onHistorySelect }) => {
             </a>
           </li>
           <li>
-            <a href="/sorucoz" className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100">
+            <a href="/soruolustur" className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100">
               <MessageSquare size={18} />
               Soru Oluştur
             </a>
@@ -53,7 +54,7 @@ const Sidebar = ({ isOpen, chatHistories = [], onHistorySelect }) => {
               <span className="text-sm text-gray-500 px-4 py-2 block">
                 Chat History
               </span>
-              <ul className="mt-2 overflow-y-auto">
+              <ul className="mt-2 max-h-96 overflow-y-auto">
                 {chatHistories.map((history) => (
                   <li key={history.id} className="relative group">
                     <button

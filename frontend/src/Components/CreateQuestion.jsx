@@ -43,7 +43,6 @@ const styles = StyleSheet.create({
   },
 });
 
-// PDF Document Component
 const ChatPDF = ({ messages }) => (
   <Document>
     <Page size="A4" style={styles.page}>
@@ -68,7 +67,7 @@ const ChatPDF = ({ messages }) => (
   </Document>
 );
 
-const QuestionArea = ({ onHistorySaved, initialChatHistory = [] }) => {
+const CreateQuestion = ({ onHistorySaved, initialChatHistory = [] }) => {
     const navigate = useNavigate();
     const { chatId } = useParams();
     const [selectedImage, setSelectedImage] = useState(null);
@@ -91,7 +90,7 @@ const QuestionArea = ({ onHistorySaved, initialChatHistory = [] }) => {
         const initializeChatId = async () => {
             if (!chatId && chatHistory.length === 0) {
                 const newChatId = await getNextChatId();
-                navigate(`/soru/${newChatId}`);
+                navigate(`/soruolustur/${newChatId}`);
             }
         };
         
@@ -202,7 +201,7 @@ const QuestionArea = ({ onHistorySaved, initialChatHistory = [] }) => {
         formData.append('history', JSON.stringify(previousMessages));
 
         try {
-            const response = await fetch(`${config.apiUrl}/chat_question/`, {
+            const response = await fetch(`${config.apiUrl}/chat_create_question/`, {
                 method: 'POST',
                 body: formData,
             });
@@ -256,7 +255,7 @@ const QuestionArea = ({ onHistorySaved, initialChatHistory = [] }) => {
         setIsLoading(true);
 
         try {
-            const response = await fetch(`${config.apiUrl}/chat_question/`, {
+            const response = await fetch(`${config.apiUrl}/chat_create_question/`, {
                 method: 'POST',
                 body: formData,
             });
@@ -335,7 +334,7 @@ const QuestionArea = ({ onHistorySaved, initialChatHistory = [] }) => {
                 }
                 if (!chatId) {
                     const newChatId = await getNextChatId();
-                    navigate(`/soru/${newChatId}`);
+                    navigate(`/soruolustur/${newChatId}`);
                 }
             } else {
                 throw new Error('Failed to save chat history');
@@ -350,7 +349,7 @@ const QuestionArea = ({ onHistorySaved, initialChatHistory = [] }) => {
         setChatHistory([]);
         localStorage.removeItem('chatHistory');
         const newChatId = await getNextChatId();
-        navigate(`/soru/${newChatId}`);
+        navigate(`/soruolustur/${newChatId}`);
     };
 
     const getNextChatId = async () => {
@@ -359,12 +358,9 @@ const QuestionArea = ({ onHistorySaved, initialChatHistory = [] }) => {
             if (response.ok) {
                 const histories = await response.json();
                 if (histories.length === 0) return '1';
-                
-                // Find the highest numeric ID
                 const numericIds = histories
                     .map(history => parseInt(history.id))
                     .filter(id => !isNaN(id));
-                
                 const maxId = Math.max(...numericIds, 0);
                 return (maxId + 1).toString();
             }
@@ -396,8 +392,6 @@ const QuestionArea = ({ onHistorySaved, initialChatHistory = [] }) => {
           </PDFDownloadLink>
         </div>
       );
-      
-
     return (
         <div className='relative flex flex-col w-full flex-1 justify-start items-center'>
             <div className='z-50 absolute right-0  border-r-8'>
@@ -472,7 +466,6 @@ const QuestionArea = ({ onHistorySaved, initialChatHistory = [] }) => {
                     </div>
                 </div>
             </div>
-           
            <div className="flex items-center justify-center w-3/12 h-48 right-0 m-2 absolute bottom-0">
            <div className='flex items-center justify-center w-24 h-24'>
            <VideoModal id={`${chatId}`} saveChatHistory={saveChatHistory}/>        
@@ -485,4 +478,4 @@ const QuestionArea = ({ onHistorySaved, initialChatHistory = [] }) => {
     );
 };
 
-export default QuestionArea;
+export default CreateQuestion;
