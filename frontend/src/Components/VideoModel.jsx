@@ -1,11 +1,8 @@
 import React, { useRef, useState, useEffect } from 'react';
-import video_before from "../dist/images/video-player.gif";
-import video_loading from "../dist/images/loading.gif";
-import video_after from "../dist/images/video.gif";
-import config from '../config.json'; 
 
 const VideoModal = ({ id, saveChatHistory }) => {
   const modalRef = useRef(null);
+  const videoRef = useRef(null);
   const [videoState, setVideoState] = useState('before');
   const [videoUrl, setVideoUrl] = useState('');
   const [isPolling, setIsPolling] = useState(false);
@@ -16,6 +13,11 @@ const VideoModal = ({ id, saveChatHistory }) => {
   };
 
   const closeModal = () => {
+    // Stop video playback when modal is closed
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+    }
     modalRef.current.close();
     setIsPolling(false);
   };
@@ -23,11 +25,11 @@ const VideoModal = ({ id, saveChatHistory }) => {
   const getVideo = async () => {
     try {
       saveChatHistory();
-      const response = await fetch(`${config.apiUrl}/check_video/${id}`); 
+      const response = await fetch(`${config.apiUrl}/check_video/${id}`);
       const data = await response.json();
 
       if (data.status === 'not_found') {
-        const createResponse = await fetch(`${config.apiUrl}/create_video`, { 
+        const createResponse = await fetch(`${config.apiUrl}/create_video`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -44,7 +46,7 @@ const VideoModal = ({ id, saveChatHistory }) => {
         setVideoUrl(data.video_url);
       }
     } catch (error) {
-      console.error('Error fetching video:', error);
+      console.error('Video yüklenirken hata oluştu:', error);
     }
   };
 
@@ -62,7 +64,7 @@ const VideoModal = ({ id, saveChatHistory }) => {
             setIsPolling(false);
           }
         } catch (error) {
-          console.error('Error polling:', error);
+          console.error('Kontrol sırasında hata:', error);
         }
       }, 1000);
     }
@@ -72,16 +74,34 @@ const VideoModal = ({ id, saveChatHistory }) => {
     };
   }, [isPolling, id]);
 
+  // Handle modal close when ESC key is pressed
+  useEffect(() => {
+    const handleEscapeKey = (event) => {
+      if (event.key === 'Escape') {
+        closeModal();
+      }
+    };
+
+    document.addEventListener('keydown', handleEscapeKey);
+    return () => {
+      document.removeEventListener('keydown', handleEscapeKey);
+    };
+  }, []);
+
   return (
     <div>
       <img
         src={videoState === 'before' ? video_before : videoState === 'loading' ? video_loading : video_after}
-        alt="Video State"
-        className="cursor-pointer"
+        alt="Video Durumu"
+        className="cursor-pointer hover:opacity-80 transition-opacity"
         onClick={openModal}
         style={{ width: '200px', height: 'auto' }}
       />
-      <dialog ref={modalRef} className="modal">
+      <dialog
+        ref={modalRef}
+        className="modal"
+        onClose={closeModal}
+      >
         <div className="modal-box w-11/12 max-w-5xl">
           <h3 className="font-bold text-lg">Video Durumu</h3>
           <div className="py-4">
@@ -91,15 +111,27 @@ const VideoModal = ({ id, saveChatHistory }) => {
               </div>
             )}
             {videoState === 'after' && videoUrl ? (
-              <video controls autoPlay className="w-full" name="media">
+              <video
+                ref={videoRef}
+                controls
+                className="w-full"
+                name="media"
+              >
                 <source src={videoUrl} type="video/mp4" />
+                Tarayıcınız video oynatmayı desteklemiyor.
               </video>
             ) : (
               videoState !== 'loading' && <p>Video hazırlanıyor...</p>
             )}
           </div>
           <div className="modal-action">
-            <button type="button" className="btn" onClick={closeModal}>Kapat</button>
+            <button 
+              type="button" 
+              className="btn hover:bg-gray-200"
+              onClick={closeModal}
+            >
+              Kapat
+            </button>
           </div>
         </div>
       </dialog>

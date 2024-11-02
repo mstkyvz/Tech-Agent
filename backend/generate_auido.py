@@ -166,7 +166,7 @@ def generate_audio(file: str, max_audio_length: int = 3600) -> str:
                 transcript += transcript_line + "\n\n"
 
         
-        temporary_directory = "/static/tmp/"
+        temporary_directory = "/home/gozerutime/static/tmp/"
         os.makedirs(temporary_directory, exist_ok=True)
 
         audio_file_path = NamedTemporaryFile(

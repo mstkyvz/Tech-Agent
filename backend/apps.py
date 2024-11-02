@@ -438,10 +438,12 @@ async def upload_pdf(file: UploadFile = File(...)):
 
 @app.get("/audio/{filename}")
 async def get_audio(filename: str):
-    return FileResponse(f"/static/tmp/{filename}", media_type="audio/mpeg")
+    return FileResponse(f"/home/gozerutime/static/tmp/{filename}", media_type="audio/mpeg")
 
 
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000, 
+                 ssl_keyfile="/home/gozerutime/key.pem", 
+                 ssl_certfile="/home/gozerutime/cert.pem")

@@ -11,62 +11,97 @@ class Solution(VoiceoverScene):
         self.step_4()
         self.step_5()
 
-    def step_1(self):
-        baslik = Text("Aktivasyon Fonksiyonları: Sigmoid vs. ReLU", font_size=36, color=BLUE).scale(0.8)
-        with self.voiceover(text="Merhaba! Bu videoda, yapay sinir ağlarında kullanılan iki önemli aktivasyon fonksiyonu olan Sigmoid ve ReLU arasındaki farkları inceleyeceğiz. Aktivasyon fonksiyonları, bir nöronun girdisini alıp bir çıktı üretmek için kullanılır. Bu çıktı, ağın bir sonraki katmanına iletilir.") as tracker:
-            self.play(Write(baslik))
-            self.wait(3)
-        self.play(FadeOut(baslik))
 
+    def step_1(self):
+        text1 = MathTex(r"A(3,4)", color=RED).scale(0.8)
+        text2 = MathTex(r"m_1 \cdot m_2 = -1", color=GREEN).scale(0.8)
+        text3 = MathTex(r"m_1 + m_2 = \frac{3}{2}", color=BLUE).scale(0.8)
+
+        text1.shift(UP*2)
+        text2.next_to(text1, DOWN)
+        text3.next_to(text2, DOWN)
+
+        with self.voiceover(text="A noktası (3,4) koordinatlarında veriliyor. İki doğru dik kesiştiği için eğimleri çarpımı -1'e eşittir. Ayrıca, eğimleri toplamı 3/2 olarak verilmiştir.") as tracker:
+            self.play(Write(text1))
+            self.wait(0.5)
+            self.play(Write(text2))
+            self.wait(0.5)
+            self.play(Write(text3))
+            self.wait(3)
+        self.play(FadeOut(text1), FadeOut(text2), FadeOut(text3))
+        
 
     def step_2(self):
-        sigmoid_formul = MathTex(r"f(x) = \frac{1}{1 + e^{-x}}", color=RED).scale(0.8)
-        relu_formul = MathTex(r"f(x) = max(0, x)", color=GREEN).scale(0.8)
+        text1 = MathTex(r"\text{Doğru 1: } y - 4 = m_1(x - 3)", color=PINK).scale(0.8)
+        text2 = MathTex(r"y = m_1x - 3m_1 + 4", color=PURPLE).scale(0.8)
+        text1.shift(UP)
+        text2.next_to(text1, DOWN)
+        with self.voiceover(text="İlk doğrunun denklemini, verilen A(3,4) noktasını ve m1 eğimini kullanarak yazalım. Nokta eğim formülünden y - 4 = m1 çarpı (x - 3) olur. Düzenlersek, y = m1x - 3m1 + 4 elde ederiz.") as tracker:
+            self.play(Write(text1))
+            self.wait(0.5)
+            self.play(Write(text2))
+            self.wait(3)
+        self.play(FadeOut(text1), FadeOut(text2))
 
-        with self.voiceover(text="İlk olarak, Sigmoid fonksiyonunu ele alalım. Sigmoid fonksiyonu, girdiyi 0 ile 1 arasında bir değere sıkıştırır. Formülü şu şekildedir:  1 bölü 1 artı e üzeri eksi x.  ReLU fonksiyonu ise negatif girdileri 0'a, pozitif girdileri ise kendilerine eşitler. Formülü, maksimum 0 ve x'dir.") as tracker:
-            self.play(Write(sigmoid_formul))
-            self.wait(3)
-            self.play(sigmoid_formul.animate.shift(UP*2))
-            self.play(Write(relu_formul))
-            self.wait(3)
-        self.play(FadeOut(sigmoid_formul), FadeOut(relu_formul))
 
     def step_3(self):
-        sigmoid_grafik = FunctionGraph(lambda x: 1 / (1 + np.exp(-x)), x_range=[-5, 5], color=RED).scale(0.8)
-        relu_grafik = FunctionGraph(lambda x: max(0, x), x_range=[-5, 5], color=GREEN).scale(0.8)
-        
-        with self.voiceover(text="Sigmoid fonksiyonunun grafiği, S şeklinde bir eğridir ve girdiler arttıkça 1'e, azaldıkça 0'a yaklaşır. ReLU fonksiyonunun grafiği ise, x ekseni boyunca 0'da sabittir ve pozitif x değerleri için doğrusal olarak artar.") as tracker:
-            self.play(Create(sigmoid_grafik))
-            self.wait(3)
-            self.play(sigmoid_grafik.animate.shift(UP*2))
-            self.play(Create(relu_grafik))
-            self.wait(3)
-        self.play(FadeOut(sigmoid_grafik), FadeOut(relu_grafik))
+        text1 = MathTex(r"x-\text{kesişim noktası: } y = 0", color=RED).scale(0.8)
+        text2 = MathTex(r"0 = m_1x - 3m_1 + 4", color=GREEN).scale(0.8)
+        text3 = MathTex(r"x = \frac{3m_1 - 4}{m_1} = 3 - \frac{4}{m_1}", color=BLUE).scale(0.8)
+        text4 = MathTex(r"B(3 - \frac{4}{m_1}, 0)", color=PINK).scale(0.8)
+        text1.shift(UP*1.5)
+        text2.next_to(text1, DOWN)
+        text3.next_to(text2, DOWN)
+        text4.next_to(text3, DOWN)
 
+        with self.voiceover(text="x-kesişim noktasını bulmak için y=0 koyarız. 0 = m1x - 3m1 + 4 denklemini çözersek, x = (3m1 - 4) / m1 = 3 - 4/m1 bulunur.  Böylece B noktasının koordinatları (3 - 4/m1, 0) olur.") as tracker:
+            self.play(Write(text1))
+            self.wait(0.5)
+            self.play(Write(text2))
+            self.wait(0.5)
+            self.play(Write(text3))
+            self.wait(0.5)
+            self.play(Write(text4))
+            self.wait(3)
+        self.play(FadeOut(text1), FadeOut(text2), FadeOut(text3), FadeOut(text4))
+    
 
     def step_4(self):
-        ornek1 = MathTex(r"\text{Sigmoid: } f(2) \approx 0.88, \ f(-1) \approx 0.27", color=PINK).scale(0.8)
-        ornek2 = MathTex(r"\text{ReLU: } f(2) = 2, \ f(-1) = 0", color=PURPLE).scale(0.8)
-
-        with self.voiceover(text="Örneklerle açıklayalım. Sigmoid fonksiyonunda, girdi 2 olduğunda çıktı yaklaşık 0.88, girdi -1 olduğunda ise yaklaşık 0.27'dir. ReLU fonksiyonunda ise, girdi 2 olduğunda çıktı 2, girdi -1 olduğunda ise çıktı 0'dır.") as tracker:
-            self.play(Write(ornek1))
+        text1 = MathTex(r"\text{Benzer şekilde, C noktası için:}", color=RED).scale(0.8).shift(UP)
+        text2 = MathTex(r"C(3 - \frac{4}{m_2}, 0)", color=GREEN).scale(0.8)
+        text2.next_to(text1, DOWN)
+        with self.voiceover(text="Benzer şekilde, ikinci doğru için aynı adımları izleyerek C noktasının koordinatlarını (3 - 4/m2, 0) olarak buluruz.") as tracker:
+            self.play(Write(text1))
+            self.wait(0.5)
+            self.play(Write(text2))
             self.wait(3)
-            self.play(ornek1.animate.shift(UP*2))
-            self.play(Write(ornek2))
-            self.wait(3)
-        self.play(FadeOut(ornek1), FadeOut(ornek2))
-
+        self.play(FadeOut(text1), FadeOut(text2))
 
     def step_5(self):
-        sonuc = Text("Sonuç:", font_size=36, color=BLACK).scale(0.8)
-        aciklama = Text("ReLU, genellikle daha hızlı öğrenme sağlar.", font_size=24, color=BLUE).scale(0.8)
+        text1 = MathTex(r"|BC| = |(3 - \frac{4}{m_1}) - (3 - \frac{4}{m_2})| = |\frac{4}{m_2} - \frac{4}{m_1}|", color=BLUE).scale(0.8)
+        text2 = MathTex(r"= |4(\frac{m_1 - m_2}{m_1m_2})| = 4|m_2 - m_1| \text{ (çünkü } m_1m_2 = -1)", color=PURPLE).scale(0.8)
+        text3 = MathTex(r"\text{Alan(ABC)} = \frac{1}{2} \cdot |BC| \cdot 4 = 2|BC| = 8|m_2 - m_1|", color=BLACK).scale(0.8)
+        text4 = MathTex(r"|m_2 - m_1| = \sqrt{(m_1 + m_2)^2 - 4m_1m_2} = \sqrt{(\frac{3}{2})^2 - 4(-1)} = \frac{5}{2}", color=RED).scale(0.8)
+        text5 = MathTex(r"\text{Alan(ABC)} = 8 \cdot \frac{5}{2} = 20", color=GREEN).scale(0.8)
+
+        text1.shift(UP*2)
+        text2.next_to(text1, DOWN)
+        text3.next_to(text2, DOWN)
+        text4.next_to(text3, DOWN)
+        text5.next_to(text4, DOWN)
 
 
-        with self.voiceover(text="Sonuç olarak, Sigmoid fonksiyonu olasılık tahmini için uygunken, ReLU genellikle daha hızlı öğrenme sağlar ve derin ağlarda kaybolan gradyan problemini azaltmada etkilidir.  Seçim, spesifik uygulamaya ve ağ mimarisine bağlıdır.") as tracker:
-            self.play(Write(sonuc))
+        with self.voiceover(text="BC uzunluğunu, B ve C noktalarının x koordinatlarının farkının mutlak değeri olarak buluruz.  Bu da |4/m2 - 4/m1| olur.  m1m2 = -1 olduğundan, bu ifade 4|m2 - m1|'e eşittir.  ABC üçgeninin alanı, taban çarpı yükseklik bölü 2'dir. Taban |BC| ve yükseklik 4 olduğundan, alan 2|BC| = 8|m2 - m1|'dir.  |m2 - m1|'i bulmak için (m2 - m1)² = (m1 + m2)² - 4m1m2 özdeşliğini kullanırız.  Buradan |m2 - m1| = 5/2 bulunur.  Sonuç olarak, alan 8 * 5/2 = 20'dir.") as tracker:
+            self.play(Write(text1))
+            self.wait(0.5)
+            self.play(Write(text2))
+            self.wait(0.5)
+            self.play(Write(text3))
+            self.wait(0.5)
+            self.play(Write(text4))
+            self.wait(0.5)
+            self.play(Write(text5))
             self.wait(3)
-            self.play(sonuc.animate.shift(UP*2))
-            self.play(Write(aciklama))
-            self.wait(3)
+        self.play(FadeOut(text1), FadeOut(text2), FadeOut(text3), FadeOut(text4), FadeOut(text5))
 
 

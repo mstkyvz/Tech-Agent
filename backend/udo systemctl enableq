@@ -1,0 +1,14 @@
+[0;1;32m●[0m backend.service - My Python App
+     Loaded: loaded (/etc/systemd/system/backend.service; disabled; vendor preset: enabled)
+     Active: [0;1;32mactive (running)[0m since Fri 2024-11-01 20:28:10 UTC; 8s ago
+   Main PID: 11128 (python3)
+      Tasks: 7 (limit: 9510)
+     Memory: 151.0M
+     CGroup: /system.slice/backend.service
+             └─11128 /usr/bin/python3 /home/gozerutime/btk-hackathon-egitim/backend/apps.py
+
+Nov 01 20:28:10 instance-20241101-123210 systemd[1]: Started My Python App.
+Nov 01 20:28:13 instance-20241101-123210 python3[11128]: INFO:     Started server process [11128]
+Nov 01 20:28:13 instance-20241101-123210 python3[11128]: INFO:     Waiting for application startup.
+Nov 01 20:28:13 instance-20241101-123210 python3[11128]: INFO:     Application startup complete.
+Nov 01 20:28:13 instance-20241101-123210 python3[11128]: INFO:     Uvicorn running on https://0.0.0.0:8000 (Press CTRL+C to quit)
