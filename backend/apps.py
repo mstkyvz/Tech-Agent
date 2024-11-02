@@ -122,7 +122,7 @@ async def send_message(message: str, history: List[dict], image_data: Optional[b
     except Exception as e:
         yield f"Error in message processing: {str(e)}"
 
-@app.post("/chat_question/")
+@app.post("/api/chat_question/")
 async def chat_endpoint(
     message: str = Form(...),
     file: Optional[UploadFile] = File(None),
@@ -151,7 +151,7 @@ async def chat_endpoint(
         raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
     
     
-@app.post("/chat_create_question/")
+@app.post("/api/chat_create_question/")
 async def chat_endpoint(
     message: str = Form(...),
     file: Optional[UploadFile] = File(None),
@@ -180,7 +180,7 @@ async def chat_endpoint(
         raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
     
     
-@app.post("/chat_konu/")
+@app.post("/api/chat_konu/")
 async def chat_endpoint(
     message: str = Form(...),
     file: Optional[UploadFile] = File(None),
@@ -227,7 +227,7 @@ def calculate_chat_hash(messages: List[Dict]) -> str:
     return hashlib.sha256(message_str.encode()).hexdigest()
 
 
-@app.post("/save_chat_history/", response_model=schemas.ChatHistoryResponse)
+@app.post("/api/save_chat_history/", response_model=schemas.ChatHistoryResponse)
 async def save_chat_history(
     chat_history: schemas.ChatHistoryCreate,
     db: Session = Depends(get_db)
@@ -272,7 +272,7 @@ async def save_chat_history(
             detail=f"Error saving chat history: {str(e)}"
         )
 
-@app.get("/get_chat_history/{history_id}", response_model=schemas.ChatHistoryFull)
+@app.get("/api/get_chat_history/{history_id}", response_model=schemas.ChatHistoryFull)
 async def get_chat_history(history_id: str, db: Session = Depends(get_db)):  # Changed to str
     try:
         chat_history = db.query(models.ChatHistory).filter(
@@ -302,7 +302,7 @@ async def get_chat_history(history_id: str, db: Session = Depends(get_db)):  # C
             detail=f"Error retrieving chat history: {str(e)}"
         )
 
-@app.get("/get_all_histories/", response_model=List[schemas.ChatHistoryResponse])
+@app.get("/api/get_all_histories/", response_model=List[schemas.ChatHistoryResponse])
 async def get_all_histories(db: Session = Depends(get_db)):
     try:
         histories = db.query(models.ChatHistory).order_by(
@@ -316,7 +316,7 @@ async def get_all_histories(db: Session = Depends(get_db)):
         )
 
 
-@app.delete("/delete_chat_history/{history_id}")
+@app.delete("/api/delete_chat_history/{history_id}")
 async def delete_chat_history(history_id: str, db: Session = Depends(get_db)):
     try:
         chat_history = db.query(models.ChatHistory).filter(
@@ -379,7 +379,7 @@ async def create_video_task(video_id: str):
         #     "created_at": datetime.now()
         # }
 
-@app.post("/create_video")
+@app.post("/api/create_video")
 async def create_video(video_data: VideoCreate):
     video_id = video_data.id
     
@@ -402,7 +402,7 @@ async def create_video(video_data: VideoCreate):
     return VideoStatus(status="processing")
 
 
-@app.get("/check_video/{video_id}")
+@app.get("/api/check_video/{video_id}")
 async def check_video(video_id: str):
     print(video_id,video_database)
     if video_id not in video_database:
@@ -415,7 +415,7 @@ async def check_video(video_id: str):
     )
 
 
-@app.delete("/delete_video/{video_id}")
+@app.delete("/api/delete_video/{video_id}")
 async def delete_video(video_id: str):
     if video_id not in video_database:
         raise HTTPException(status_code=404, detail="Video not found")
@@ -426,7 +426,7 @@ async def delete_video(video_id: str):
 
 
 
-@app.post("/upload-pdf/")
+@app.post("/api/upload-pdf/")
 async def upload_pdf(file: UploadFile = File(...)):
 
     with open("temp.pdf", "wb") as buffer:
@@ -436,7 +436,7 @@ async def upload_pdf(file: UploadFile = File(...)):
     
     return {"audio_file": audio_file_path}
 
-@app.get("/audio/{filename}")
+@app.get("/api/audio/{filename}")
 async def get_audio(filename: str):
     return FileResponse(f"/home/gozerutime/static/tmp/{filename}", media_type="audio/mpeg")
 
