@@ -13,95 +13,77 @@ class Solution(VoiceoverScene):
 
 
     def step_1(self):
-        text1 = MathTex(r"A(3,4)", color=RED).scale(0.8)
-        text2 = MathTex(r"m_1 \cdot m_2 = -1", color=GREEN).scale(0.8)
-        text3 = MathTex(r"m_1 + m_2 = \frac{3}{2}", color=BLUE).scale(0.8)
-
-        text1.shift(UP*2)
-        text2.next_to(text1, DOWN)
-        text3.next_to(text2, DOWN)
-
-        with self.voiceover(text="A noktası (3,4) koordinatlarında veriliyor. İki doğru dik kesiştiği için eğimleri çarpımı -1'e eşittir. Ayrıca, eğimleri toplamı 3/2 olarak verilmiştir.") as tracker:
-            self.play(Write(text1))
-            self.wait(0.5)
-            self.play(Write(text2))
-            self.wait(0.5)
-            self.play(Write(text3))
+        text1 = Tex(r"A(a, b) noktasının B(3, 0) noktasına göre simetriği C noktası olsun.").scale(0.8)
+        with self.voiceover(text="A(a, b) noktasının B(3, 0) noktasına göre simetriği C noktası olsun.  Simetri noktası bulma formülünü kullanarak C noktasının koordinatlarını bulacağız.") as tracker:
+            self.play(Create(text1))
             self.wait(3)
-        self.play(FadeOut(text1), FadeOut(text2), FadeOut(text3))
-        
+        self.play(FadeOut(text1))
 
     def step_2(self):
-        text1 = MathTex(r"\text{Doğru 1: } y - 4 = m_1(x - 3)", color=PINK).scale(0.8)
-        text2 = MathTex(r"y = m_1x - 3m_1 + 4", color=PURPLE).scale(0.8)
-        text1.shift(UP)
-        text2.next_to(text1, DOWN)
-        with self.voiceover(text="İlk doğrunun denklemini, verilen A(3,4) noktasını ve m1 eğimini kullanarak yazalım. Nokta eğim formülünden y - 4 = m1 çarpı (x - 3) olur. Düzenlersek, y = m1x - 3m1 + 4 elde ederiz.") as tracker:
-            self.play(Write(text1))
-            self.wait(0.5)
-            self.play(Write(text2))
+        text2 = MathTex(r"x = 2 \cdot 3 - a = 6 - a").scale(0.8).set_color(RED)
+        text3 = MathTex(r"y = 2 \cdot 0 - b = -b").scale(0.8).set_color(GREEN)
+        text4 = MathTex(r"C(6 - a, -b)").scale(0.8).set_color(BLUE)
+
+        with self.voiceover(text="C noktasının koordinatları (x, y) ise, x eşittir 2 çarpı 3 eksi a, yani 6 eksi a. y eşittir 2 çarpı 0 eksi b, yani eksi b. Böylece C noktasının koordinatları (6 eksi a, eksi b) olur.") as tracker:
+            self.play(Create(text2))
+            self.wait(1)
+            self.play(text2.animate.shift(UP))
+            self.play(Create(text3))
+            self.wait(1)
+            self.play(text3.animate.shift(UP))
+            self.play(Create(text4))
             self.wait(3)
-        self.play(FadeOut(text1), FadeOut(text2))
+
+        self.play(FadeOut(text2),FadeOut(text3),FadeOut(text4))
 
 
     def step_3(self):
-        text1 = MathTex(r"x-\text{kesişim noktası: } y = 0", color=RED).scale(0.8)
-        text2 = MathTex(r"0 = m_1x - 3m_1 + 4", color=GREEN).scale(0.8)
-        text3 = MathTex(r"x = \frac{3m_1 - 4}{m_1} = 3 - \frac{4}{m_1}", color=BLUE).scale(0.8)
-        text4 = MathTex(r"B(3 - \frac{4}{m_1}, 0)", color=PINK).scale(0.8)
-        text1.shift(UP*1.5)
-        text2.next_to(text1, DOWN)
-        text3.next_to(text2, DOWN)
-        text4.next_to(text3, DOWN)
 
-        with self.voiceover(text="x-kesişim noktasını bulmak için y=0 koyarız. 0 = m1x - 3m1 + 4 denklemini çözersek, x = (3m1 - 4) / m1 = 3 - 4/m1 bulunur.  Böylece B noktasının koordinatları (3 - 4/m1, 0) olur.") as tracker:
-            self.play(Write(text1))
-            self.wait(0.5)
-            self.play(Write(text2))
-            self.wait(0.5)
-            self.play(Write(text3))
-            self.wait(0.5)
-            self.play(Write(text4))
+        text5 = Tex(r"C noktasının y-eksenine göre simetriği D noktasıdır.").scale(0.8)
+        text6 = MathTex(r"D(-(6 - a), -b) = (a - 6, -b)").scale(0.8).set_color(PINK)
+        with self.voiceover(text="C noktasının y-eksenine göre simetriği D noktasıdır. D noktasının koordinatlarını bulmak için x koordinatının işaretini değiştiririz. Bu durumda D noktasının koordinatları (a eksi 6, eksi b) olur.") as tracker:
+            self.play(Create(text5))
             self.wait(3)
-        self.play(FadeOut(text1), FadeOut(text2), FadeOut(text3), FadeOut(text4))
-    
+            self.play(FadeOut(text5))
+            self.play(Create(text6))
+            self.wait(3)
+        self.play(FadeOut(text6))
+
+
 
     def step_4(self):
-        text1 = MathTex(r"\text{Benzer şekilde, C noktası için:}", color=RED).scale(0.8).shift(UP)
-        text2 = MathTex(r"C(3 - \frac{4}{m_2}, 0)", color=GREEN).scale(0.8)
-        text2.next_to(text1, DOWN)
-        with self.voiceover(text="Benzer şekilde, ikinci doğru için aynı adımları izleyerek C noktasının koordinatlarını (3 - 4/m2, 0) olarak buluruz.") as tracker:
-            self.play(Write(text1))
-            self.wait(0.5)
-            self.play(Write(text2))
-            self.wait(3)
-        self.play(FadeOut(text1), FadeOut(text2))
+        text7 = Tex(r"C ve D noktalarından geçen doğrunun denklemi y = -x - 1'dir.").scale(0.8)
+        text8 = Tex(r"C ve D noktalarını denklemde yerine koyalım.").scale(0.8).set_color(PURPLE)
+        with self.voiceover(text="C ve D noktalarından geçen doğrunun denklemi y eşittir eksi x eksi 1'dir. Şimdi C ve D noktalarının koordinatlarını bu denklemde yerine koyarak a ve b arasındaki ilişkiyi bulacağız.") as tracker:
+             self.play(Create(text7))
+             self.wait(1)
+             self.play(text7.animate.shift(UP))
+             self.play(Create(text8))
+             self.wait(3)
+        self.play(FadeOut(text7),FadeOut(text8))
 
     def step_5(self):
-        text1 = MathTex(r"|BC| = |(3 - \frac{4}{m_1}) - (3 - \frac{4}{m_2})| = |\frac{4}{m_2} - \frac{4}{m_1}|", color=BLUE).scale(0.8)
-        text2 = MathTex(r"= |4(\frac{m_1 - m_2}{m_1m_2})| = 4|m_2 - m_1| \text{ (çünkü } m_1m_2 = -1)", color=PURPLE).scale(0.8)
-        text3 = MathTex(r"\text{Alan(ABC)} = \frac{1}{2} \cdot |BC| \cdot 4 = 2|BC| = 8|m_2 - m_1|", color=BLACK).scale(0.8)
-        text4 = MathTex(r"|m_2 - m_1| = \sqrt{(m_1 + m_2)^2 - 4m_1m_2} = \sqrt{(\frac{3}{2})^2 - 4(-1)} = \frac{5}{2}", color=RED).scale(0.8)
-        text5 = MathTex(r"\text{Alan(ABC)} = 8 \cdot \frac{5}{2} = 20", color=GREEN).scale(0.8)
-
-        text1.shift(UP*2)
-        text2.next_to(text1, DOWN)
-        text3.next_to(text2, DOWN)
-        text4.next_to(text3, DOWN)
-        text5.next_to(text4, DOWN)
+        text9 = MathTex(r"b = 7 - a").scale(0.8).set_color(RED)
+        text10 = MathTex(r"b = a - 5").scale(0.8).set_color(GREEN)
+        text11 = MathTex(r"a = 6").scale(0.8).set_color(BLUE)
+        text12 = MathTex(r"b = 1").scale(0.8).set_color(PINK)
+        text13 = MathTex(r"a + b = 7").scale(0.8).set_color(BLACK).set_color(YELLOW)
 
 
-        with self.voiceover(text="BC uzunluğunu, B ve C noktalarının x koordinatlarının farkının mutlak değeri olarak buluruz.  Bu da |4/m2 - 4/m1| olur.  m1m2 = -1 olduğundan, bu ifade 4|m2 - m1|'e eşittir.  ABC üçgeninin alanı, taban çarpı yükseklik bölü 2'dir. Taban |BC| ve yükseklik 4 olduğundan, alan 2|BC| = 8|m2 - m1|'dir.  |m2 - m1|'i bulmak için (m2 - m1)² = (m1 + m2)² - 4m1m2 özdeşliğini kullanırız.  Buradan |m2 - m1| = 5/2 bulunur.  Sonuç olarak, alan 8 * 5/2 = 20'dir.") as tracker:
-            self.play(Write(text1))
-            self.wait(0.5)
-            self.play(Write(text2))
-            self.wait(0.5)
-            self.play(Write(text3))
-            self.wait(0.5)
-            self.play(Write(text4))
-            self.wait(0.5)
-            self.play(Write(text5))
+        with self.voiceover(text="C noktasını denklemde yerine koyarsak, b eşittir 7 eksi a bulunur. D noktasını denklemde yerine koyarsak, b eşittir a eksi 5 bulunur. Bu iki denklemi çözerek a eşittir 6 ve b eşittir 1 buluruz. Sonuç olarak a artı b eşittir 7 olur.  Cevap A şıkkıdır.") as tracker:
+            self.play(Create(text9))
+            self.wait(1)
+            self.play(text9.animate.shift(UP))
+            self.play(Create(text10))
+            self.wait(1)
+            self.play(text10.animate.shift(UP))
+            self.play(Create(text11))
+            self.wait(1)
+            self.play(text11.animate.shift(UP))
+            self.play(Create(text12))
+            self.wait(1)
+            self.play(text12.animate.shift(UP))
+            self.play(Create(text13))
+
             self.wait(3)
-        self.play(FadeOut(text1), FadeOut(text2), FadeOut(text3), FadeOut(text4), FadeOut(text5))
-
 

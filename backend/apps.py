@@ -354,8 +354,8 @@ class VideoStatus(BaseModel):
 async def create_video_task(video_id: str):
     try:
 
-        video_path = f"/media/videos/1080p60/{video_id}.mp4"  
-        if os.path.exists("../frontend/public"+video_path):
+        video_path = f"/static/videomedia/videos/1080p60/{video_id}.mp4"  
+        if os.path.exists("../frontend/build"+video_path):
             if not video_id in video_database:
                 video_database[video_id] = {
                     "status": "completed",
@@ -383,8 +383,8 @@ async def create_video_task(video_id: str):
 async def create_video(video_data: VideoCreate):
     video_id = video_data.id
     
-    video_path = f"/media/videos/1080p60/{video_id}.mp4"  
-    if os.path.exists("../frontend/public"+video_path):
+    video_path = f"/static/videomedia/videos/1080p60/{video_id}.mp4"  
+    if os.path.exists("../frontend/build"+video_path):
             if not video_id in video_database:
                 video_database[video_id] = {
                     "status": "completed",
@@ -444,5 +444,5 @@ async def get_audio(filename: str):
 
 if __name__ == "__main__":
     import uvicorn
-    #uvicorn.run(app, host="0.0.0.0", port=8000)
-    uvicorn.run(app, host="0.0.0.0", port=8000,ssl_keyfile="/home/gozerutime/key.pem",ssl_certfile="/home/gozerutime/cert.pem")
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+    #uvicorn.run(app, host="0.0.0.0", port=8000,ssl_keyfile="/home/gozerutime/key.pem",ssl_certfile="/home/gozerutime/cert.pem")

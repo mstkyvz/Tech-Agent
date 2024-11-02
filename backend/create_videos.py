@@ -116,7 +116,7 @@ async def run(chat_id):
         
         response = generate_response.generate_response_with_image(prompt_manim, images[0] if images!=[] else None)
         print(messages)
-        config.media_dir="../frontend/public/media"
+        config.media_dir="../frontend/build/static/videomedia"
         config.output_file = f"{chat_id}"
         config.background_color = "#e0e6e2" 
         Tex.set_default(color=BLACK)
