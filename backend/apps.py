@@ -444,6 +444,5 @@ async def get_audio(filename: str):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000, 
-                 ssl_keyfile="/home/gozerutime/key.pem", 
-                 ssl_certfile="/home/gozerutime/cert.pem")
+    #uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000,ssl_keyfile="/home/gozerutime/key.pem",ssl_certfile="/home/gozerutime/cert.pem")
