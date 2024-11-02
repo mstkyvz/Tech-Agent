@@ -85,7 +85,7 @@ const Podcast = () => {
 
   return (
     <div className="flex flex-col justify-center items-center w-full h-full">
-      <div className="flex flex-col justify-center items-center rounded-3xl bg-white h-3/4 w-1/2 shadow-2xl p-8  mx-auto">
+      <div className="flex flex-col justify-center items-center rounded-3xl bg-white h-3/4 md:w-1/2 shadow-2xl p-8  mx-auto">
         <h2 className="text-6xl  font-bold mb-10 ">Podcast</h2>
         
         <button

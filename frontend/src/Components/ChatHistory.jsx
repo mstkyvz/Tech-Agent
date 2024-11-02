@@ -51,7 +51,7 @@ const ChatHistory = ({ messages, onRefreshMessage }) => {
                     className={`flex w-full ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                     <div 
-                        className={`relative max-w-[70%] rounded-lg p-6 shadow-md
+                        className={`relative md:max-w-[70%] rounded-lg p-6 shadow-md
                             ${message.type === 'user' 
                                 ? 'bg-gray-200 text-black ml-auto rounded-br-none' 
                                 : message.type === 'error' 

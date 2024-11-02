@@ -305,7 +305,7 @@ const KonuAnlatim = ({ onHistorySaved, initialChatHistory = [] }) => {
     };
 
     const ExportButton = () => (
-        <div className="absolute top-4 right-4">
+        <div className="absolute top-4 right-0 md:right-4">
           <PDFDownloadLink
             document={<ChatPDF messages={chatHistory} chatId={chatId} />}
             fileName={`chat-${chatId}.pdf`}
@@ -326,7 +326,7 @@ const KonuAnlatim = ({ onHistorySaved, initialChatHistory = [] }) => {
             <ExportButton />
             </div>
             <div className="mx-auto flex-1 w-full items-start justify-center overflow-y-auto mb-48">
-                <div className="flex w-full px-10">
+            <div className="flex w-full md:px-10">
                     <ChatHistory 
                         messages={chatHistory} 
                         onRefreshMessage={handleRefreshMessage}
@@ -334,8 +334,8 @@ const KonuAnlatim = ({ onHistorySaved, initialChatHistory = [] }) => {
                 </div>
                 <div ref={chatEndRef} />
             </div>
-            <div className="flex flex-col items-center w-4/5 absolute bottom-0 bg-opacity-60">
-                <div className="flex flex-col items-center mt-2 mb-5 w-3/5">
+            <div className="flex flex-col items-center w-full md:w-4/5 absolute bottom-0 bg-opacity-60">
+                <div className="flex flex-col items-center mt-2 mb-5 w-11/12 md:w-3/5">
                     <div className="bg-white rounded-lg w-full h-2/12 md:h-[100px]"
                         onDragOver={handleDragOver}
                         onDrop={handleDrop}>
@@ -381,19 +381,19 @@ const KonuAnlatim = ({ onHistorySaved, initialChatHistory = [] }) => {
                                 </svg>
                             )}
                         </button>
-                        <div className="w-3/12">
+                        <div className="w-1/12 mr-10 md:mr-2">
                             <button
                                 onClick={clearChat}
                                 className="bg-gray-500 hover:bg-gray-600 text-white text-sm font-bold py-[10px] px-4 rounded"
                             >
-                                Yeni Sohbet
+                                Yeni
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
-            <div className="flex items-center justify-center w-3/12 h-48 right-0 m-2 absolute bottom-0">
-                <div className='flex items-center justify-center w-24 h-24'>
+            <div className="flex items-center justify-center md:h-48 right-0 m-2 absolute mt-14 md:mt-0 md:bottom-0 rounded-3xl">
+            <div className='flex items-center justify-center  w-8 h-8 md:w-24 md:h-24'>
                     <VideoModal id={`${chatId}`} saveChatHistory={saveChatHistory} />        
                 </div>
             </div>
