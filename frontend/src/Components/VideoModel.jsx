@@ -1,4 +1,8 @@
 import React, { useRef, useState, useEffect } from 'react';
+import video_before from "../dist/images/video-player.gif";
+import video_loading from "../dist/images/loading.gif";
+import video_after from "../dist/images/video.gif";
+import config from '../config.json'; 
 
 const VideoModal = ({ id, saveChatHistory }) => {
   const modalRef = useRef(null);
@@ -13,7 +17,6 @@ const VideoModal = ({ id, saveChatHistory }) => {
   };
 
   const closeModal = () => {
-    // Stop video playback when modal is closed
     if (videoRef.current) {
       videoRef.current.pause();
       videoRef.current.currentTime = 0;
@@ -140,3 +143,4 @@ const VideoModal = ({ id, saveChatHistory }) => {
 };
 
 export default VideoModal;
+
