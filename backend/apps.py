@@ -25,12 +25,18 @@ from database import SessionLocal, engine
 import create_videos
 from generate_auido import generate_audio
 from fastapi.staticfiles import StaticFiles
+import threading
+import queue
+import time
 
+# Initialize database
 models.Base.metadata.create_all(bind=engine)
 
+# Initialize FastAPI app
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+# Database session dependency
 def get_db():
     db = SessionLocal()
     try:
@@ -38,10 +44,17 @@ def get_db():
     finally:
         db.close()
 
-video_database = {}        
-genai.configure(api_key='AIzaSyCeusRpeamEuHVVRrNCwmu0XtDj_QL8mXc')
-model = genai.GenerativeModel('gemini-1.5-pro')  
+# Initialize global variables
+video_database = {}
+video_queue = queue.Queue()
+video_threads = {}
+MAX_CONCURRENT_VIDEOS = 3
 
+# Configure Gemini AI
+genai.configure(api_key='AIzaSyCeusRpeamEuHVVRrNCwmu0XtDj_QL8mXc')
+model = genai.GenerativeModel('gemini-1.5-pro')
+
+# Configure CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -55,6 +68,60 @@ class ChatMessage(BaseModel):
     content: str
     timestamp: str
     image: Optional[str] = None
+
+class VideoCreate(BaseModel):
+    id: str
+
+class VideoStatus(BaseModel):
+    status: str
+    video_url: Optional[str] = None
+
+def video_worker():
+    """Worker function that processes videos from the queue"""
+    while True:
+        try:
+            video_id = video_queue.get()
+            if video_id is None:  # Poison pill to stop the thread
+                break
+                
+            try:
+                # Update status to show it's being processed
+                video_database[video_id]["status"] = "processing"
+                
+                # Create the video
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                loop.run_until_complete(create_videos.run(video_id))
+                loop.close()
+                
+                video_path = f"/static/videomedia/videos/1080p60/{video_id}.mp4"
+                video_database[video_id].update({
+                    "status": "completed",
+                    "video_url": video_path,
+                    "created_at": datetime.now()
+                })
+            except Exception as e:
+                print(f"Error processing video {video_id}: {str(e)}")
+                video_database[video_id].update({
+                    "status": "error",
+                    "error": str(e),
+                    "created_at": datetime.now()
+                })
+            finally:
+                video_queue.task_done()
+                if video_id in video_threads:
+                    del video_threads[video_id]
+                
+        except Exception as e:
+            print(f"Worker thread error: {str(e)}")
+            continue
+
+# Start worker threads
+worker_threads = []
+for _ in range(MAX_CONCURRENT_VIDEOS):
+    t = threading.Thread(target=video_worker, daemon=True)
+    t.start()
+    worker_threads.append(t)
 
 def process_gemini_response(response):
     try:
@@ -83,13 +150,13 @@ def create_content_parts(message: str, image_data: Optional[bytes] = None) -> Li
     
     return genai.protos.Content(parts=parts)
 
-def build_prompt(message: str, history: List[dict],types) -> List[Dict[str, Any]]:
-    if types=="question":
-        messages = [{'role':'user','parts':prompt.system_prompt_question}]
-    elif types=="create_question":
-        messages = [{'role':'user','parts':prompt.system_prompt_question}]
+def build_prompt(message: str, history: List[dict], types) -> List[Dict[str, Any]]:
+    if types == "question":
+        messages = [{'role': 'user', 'parts': prompt.system_prompt_question}]
+    elif types == "create_question":
+        messages = [{'role': 'user', 'parts': prompt.system_prompt_question}]
     else:
-        messages = [{'role':'user','parts':prompt.system_prompt_konu}]
+        messages = [{'role': 'user', 'parts': prompt.system_prompt_konu}]
     
     for msg in history:
         role = "user" if msg['type'] == 'user' else "model"
@@ -105,9 +172,9 @@ def build_prompt(message: str, history: List[dict],types) -> List[Dict[str, Any]
     
     return messages
 
-async def send_message(message: str, history: List[dict], image_data: Optional[bytes] = None,types="question"):
+async def send_message(message: str, history: List[dict], image_data: Optional[bytes] = None, types="question"):
     try:
-        content = build_prompt(message, history,types)
+        content = build_prompt(message, history, types)
 
         if image_data:
             content_parts = create_content_parts(message, image_data)
@@ -121,6 +188,45 @@ async def send_message(message: str, history: List[dict], image_data: Optional[b
             
     except Exception as e:
         yield f"Error in message processing: {str(e)}"
+
+async def create_video_task(video_id: str):
+    try:
+        # Check if video already exists
+        video_path = f"/static/videomedia/videos/1080p60/{video_id}.mp4"
+        if os.path.exists("../frontend/build" + video_path):
+            if video_id not in video_database:
+                video_database[video_id] = {
+                    "status": "completed",
+                    "video_url": video_path,
+                    "created_at": datetime.now()
+                }
+            return
+
+        # Add to queue if not already being processed
+        if video_id not in video_threads:
+            video_threads[video_id] = threading.current_thread()
+            video_queue.put(video_id)
+            
+    except Exception as e:
+        print(f"Error queuing video {video_id}: {str(e)}")
+        video_database[video_id] = {
+            "status": "error",
+            "error": str(e),
+            "created_at": datetime.now()
+        }
+
+def calculate_chat_hash(messages: List[Dict]) -> str:
+    hash_content = []
+    for msg in messages:
+        hash_content.append({
+            'type': msg['type'],
+            'content': msg['content']
+        })
+    
+    message_str = json.dumps(hash_content, sort_keys=True)
+    return hashlib.sha256(message_str.encode()).hexdigest()
+
+# API Endpoints
 
 @app.post("/api/chat_question/")
 async def chat_endpoint(
@@ -149,8 +255,7 @@ async def chat_endpoint(
         raise HTTPException(status_code=400, detail="Invalid history format")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
-    
-    
+
 @app.post("/api/chat_create_question/")
 async def chat_endpoint(
     message: str = Form(...),
@@ -167,7 +272,7 @@ async def chat_endpoint(
             contents = await file.read()
             
         async def stream_response():
-            async for chunk in send_message(message, chat_history, contents,"create_question"):
+            async for chunk in send_message(message, chat_history, contents, "create_question"):
                 yield chunk.encode('utf-8')
         
         return StreamingResponse(
@@ -178,8 +283,7 @@ async def chat_endpoint(
         raise HTTPException(status_code=400, detail="Invalid history format")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
-    
-    
+
 @app.post("/api/chat_konu/")
 async def chat_endpoint(
     message: str = Form(...),
@@ -196,7 +300,7 @@ async def chat_endpoint(
             contents = await file.read()
             
         async def stream_response():
-            async for chunk in send_message(message, chat_history, contents,"konu"):
+            async for chunk in send_message(message, chat_history, contents, "konu"):
                 yield chunk.encode('utf-8')
         
         return StreamingResponse(
@@ -207,25 +311,6 @@ async def chat_endpoint(
         raise HTTPException(status_code=400, detail="Invalid history format")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
-
-
-def calculate_chat_hash(messages: List[Dict]) -> str:
-    """
-    Calculate a hash of chat messages to check for duplicates.
-    Only considers the content and type of messages, ignoring timestamps.
-    """
-    hash_content = []
-    for msg in messages:
-        
-        hash_content.append({
-            'type': msg['type'],
-            'content': msg['content']
-        })
-    
-    
-    message_str = json.dumps(hash_content, sort_keys=True)
-    return hashlib.sha256(message_str.encode()).hexdigest()
-
 
 @app.post("/api/save_chat_history/", response_model=schemas.ChatHistoryResponse)
 async def save_chat_history(
@@ -273,7 +358,7 @@ async def save_chat_history(
         )
 
 @app.get("/api/get_chat_history/{history_id}", response_model=schemas.ChatHistoryFull)
-async def get_chat_history(history_id: str, db: Session = Depends(get_db)):  # Changed to str
+async def get_chat_history(history_id: str, db: Session = Depends(get_db)):
     try:
         chat_history = db.query(models.ChatHistory).filter(
             models.ChatHistory.id == history_id
@@ -315,7 +400,6 @@ async def get_all_histories(db: Session = Depends(get_db)):
             detail=f"Error retrieving chat histories: {str(e)}"
         )
 
-
 @app.delete("/api/delete_chat_history/{history_id}")
 async def delete_chat_history(history_id: str, db: Session = Depends(get_db)):
     try:
@@ -341,70 +425,33 @@ async def delete_chat_history(history_id: str, db: Session = Depends(get_db)):
             detail=f"Error deleting chat history: {str(e)}"
         )
 
-
-
-
-class VideoCreate(BaseModel):
-    id: str
-
-class VideoStatus(BaseModel):
-    status: str
-    video_url: Optional[str] = None
-
-async def create_video_task(video_id: str):
-    try:
-
-        video_path = f"/static/videomedia/videos/1080p60/{video_id}.mp4"  
-        if os.path.exists("../frontend/build"+video_path):
-            if not video_id in video_database:
-                video_database[video_id] = {
-                    "status": "completed",
-                    "video_url": video_path,
-                    "created_at": datetime.now()
-                }
-            return
-        await create_videos.run(video_id)
-        
-    
-        video_database[video_id] = {
-            "status": "completed",
-            "video_url": video_path,
-            "created_at": datetime.now()
-        }
-    except Exception as e:
-        print(f"Error {e}")
-        # video_database[video_id] = {
-        #     "status": "error",
-        #     "error": str(e),
-        #     "created_at": datetime.now()
-        # }
-
 @app.post("/api/create_video")
 async def create_video(video_data: VideoCreate):
     video_id = video_data.id
     
-    video_path = f"/static/videomedia/videos/1080p60/{video_id}.mp4"  
-    if os.path.exists("../frontend/build"+video_path):
-            if not video_id in video_database:
-                video_database[video_id] = {
-                    "status": "completed",
-                    "video_url": video_path,
-                    "created_at": datetime.now()
-                }
-            return VideoStatus(status=video_database[video_id]["status"])
+    # Check if video already exists
+    video_path = f"/static/videomedia/videos/1080p60/{video_id}.mp4"
+    if os.path.exists("../frontend/build" + video_path):
+        if video_id not in video_database:
+            video_database[video_id] = {
+                "status": "completed",
+                "video_url": video_path,
+                "created_at": datetime.now()
+            }
+        return VideoStatus(status=video_database[video_id]["status"])
+    
+
     if video_id in video_database:
         return VideoStatus(status=video_database[video_id]["status"])
     
-    video_database[video_id] = {"status": "processing"}
-    
+    video_database[video_id] = {"status": "queued"}
     asyncio.create_task(create_video_task(video_id))
     
-    return VideoStatus(status="processing")
-
+    return VideoStatus(status="queued")
 
 @app.get("/api/check_video/{video_id}")
 async def check_video(video_id: str):
-    print(video_id,video_database)
+    print(video_id, video_database)
     if video_id not in video_database:
         return VideoStatus(status="not_found")
     
@@ -414,7 +461,6 @@ async def check_video(video_id: str):
         video_url=video_info.get("video_url")
     )
 
-
 @app.delete("/api/delete_video/{video_id}")
 async def delete_video(video_id: str):
     if video_id not in video_database:
@@ -423,12 +469,8 @@ async def delete_video(video_id: str):
     del video_database[video_id]
     return {"message": "Video deleted successfully"}
 
-
-
-
 @app.post("/api/upload-pdf/")
 async def upload_pdf(file: UploadFile = File(...)):
-
     with open("temp.pdf", "wb") as buffer:
         buffer.write(await file.read())
     
@@ -440,7 +482,16 @@ async def upload_pdf(file: UploadFile = File(...)):
 async def get_audio(filename: str):
     return FileResponse(f"/home/gozerutime/static/tmp/{filename}", media_type="audio/mpeg")
 
-
+# Shutdown event handler
+@app.on_event("shutdown")
+async def shutdown_event():
+    # Send poison pills to stop worker threads
+    for _ in worker_threads:
+        video_queue.put(None)
+    
+    # Wait for all threads to complete
+    for t in worker_threads:
+        t.join()
 
 if __name__ == "__main__":
     import uvicorn
