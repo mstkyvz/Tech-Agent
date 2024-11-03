@@ -51,7 +51,6 @@ Bu proje, öğrenme deneyimlerini geliştirmek için yapay zekadan yararlanarak 
    npm start
    ```
 
-   Tarayıcınızda görüntülemek için [http://localhost:3000](http://localhost:3000) adresini açın.
 
 ### Backend
 
