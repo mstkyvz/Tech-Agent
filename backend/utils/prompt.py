@@ -238,11 +238,10 @@ class Solution(VoiceoverScene):
 
 Note: Oluşturulan Classın ismi "Solution" olacak.
 Note: oluşturduğun formüller vb başına self. koymayı unutma
-
+Note: self.voiceover içine yazdıklarına markdown ve latex uygulama.
 
 Çözüm:
 {}
-
 """
 
 

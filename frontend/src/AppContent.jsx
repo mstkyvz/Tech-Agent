@@ -9,6 +9,7 @@ import './App.css';
 import CreateQuestion from './Components/CreateQuestion';
 
 import config from './config.json';
+import MainPage from './Components/MainPage';
 
 const AppContent = () => {
     const [isOpen, setIsOpen] = useState(true);
@@ -57,6 +58,12 @@ const AppContent = () => {
                 />
                 <div className="flex w-full bg-[#f9faff]">
                     <Routes>
+                        <Route
+                            path="/"
+                            element={
+                                <MainPage/>
+                            }
+                        />
                         <Route
                             path="/konu"
                             element={

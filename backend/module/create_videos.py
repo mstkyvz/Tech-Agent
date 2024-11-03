@@ -3,23 +3,28 @@ import json
 import base64
 from PIL import Image
 from io import BytesIO
-from typing import Tuple, List, Dict
+from typing import Tuple, List, Dict, Optional
 from pathlib import Path
 from contextlib import contextmanager
-import generate_response
-import prompt
+from services import generate_response
+from utils import prompt
 from manim_voiceover import VoiceoverScene
 from manim_voiceover.services.gtts import GTTSService
 from manim import *
 import importlib.util
 import sys
+from datetime import datetime
 
 class ChatDatabase:
+    """Chat veritabanına erişim sağlayan bir sınıf."""
+    
     def __init__(self, db_path: str = 'chat_history.db'):
+        """Veritabanı dosyasının yolunu belirler."""
         self.db_path = Path(db_path)
     
     @contextmanager
-    def connect(self):
+    def connect(self) -> sqlite3.Connection:
+        """Veritabanına bağlantı sağlamak için bir bağlam yöneticisi."""
         conn = None
         try:
             conn = sqlite3.connect(self.db_path)
@@ -29,12 +34,14 @@ class ChatDatabase:
                 conn.close()
     
     def get_tables(self) -> List[str]:
+        """Veritabanındaki tüm tablo isimlerini döner."""
         with self.connect() as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
             return [table[0] for table in cursor.fetchall()]
 
     def get_chat_history(self, chat_id: int) -> Dict:
+        """Belirtilen chat ID'sine ait sohbet geçmişini döner."""
         with self.connect() as conn:
             cursor = conn.cursor()
             cursor.execute(
@@ -49,8 +56,11 @@ class ChatDatabase:
             return json.loads(result[0])
 
 class MessageProcessor:
+    """Mesajları işlemek için bir sınıf."""
+    
     @staticmethod
     def decode_image(base64_str: str) -> Image.Image:
+        """Base64 string'ini görüntüye çevirir."""
         try:
             if ',' in base64_str:
                 base64_str = base64_str.split(',')[1]
@@ -62,6 +72,7 @@ class MessageProcessor:
             raise
 
     def process_messages(self, messages: List[Dict]) -> Tuple[str, List[Image.Image]]:
+        """Mesajları metin ve görüntü listesine ayırır."""
         text_messages = []
         images = []
         
@@ -77,7 +88,8 @@ class MessageProcessor:
         
         return '\n'.join(text_messages), images
 
-def save_and_run_manim_code(manim_code: str):
+def save_and_run_manim_code(manim_code: str) -> None:
+    """Manim kodunu kaydeder ve çalıştırır."""
     with open("manicode.py", "w", encoding="utf-8") as f:
         f.write(manim_code)
     
@@ -103,7 +115,8 @@ def save_and_run_manim_code(manim_code: str):
         print(f"Modül yükleme hatası: {e}")
         raise
 
-async def run(chat_id):
+async def run(chat_id: int) -> None:
+    """Belirtilen chat ID'sine göre işlemleri gerçekleştirir."""
     print("id: ", chat_id, flush=False)
     chat_id = str(chat_id)
     try:
@@ -114,7 +127,7 @@ async def run(chat_id):
         messages, images = processor.process_messages(chat_messages)
         prompt_manim = prompt.manim_prompt.format(messages)
         
-        response = generate_response.generate_response_with_image(prompt_manim, images[0] if images!=[] else None)
+        response = generate_response.generate_response_with_image(prompt_manim, images[0] if images else None)
         print(messages)
         config.media_dir="../frontend/build/static/videomedia"
         config.output_file = f"{chat_id}"
@@ -131,7 +144,7 @@ async def run(chat_id):
                 save_and_run_manim_code(manim_code)
                 break
             except Exception as e:
-                response = generate_response.generate_response_with_image(prompt_manim, images[0] if images!=[] else None)
+                response = generate_response.generate_response_with_image(prompt_manim, images[0] if images else None)
                 print("-----" * 30)
                 print(e)
 
