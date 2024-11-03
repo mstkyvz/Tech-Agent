@@ -1,7 +1,6 @@
 {
-    "api_keys":["AIzaSyCeusRpeamEuHVVRrNCwmu0XtDj_QL8mXc","AIzaSyCeusRpeamEuHVVRrNCwmu0XtDj_QL8mXc","AIzaSyAy3E3BYjXjS6fyrRUbS2m8ip3Sdb3hmqA"],
+    "api_keys":[],
     "ports":8000,
-    "database_url": "your-database-url",
     "video_settings": {
         "max_concurrent": 3,
         "output_path": "/static/videomedia/videos/1080p60/",
