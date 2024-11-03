@@ -50,19 +50,27 @@ const KonuAnlatim = ({ onHistorySaved, initialChatHistory = [] }) => {
         }
     }, [initialChatHistory]);
 
-    const handlePdfChange = (e) => {
+    const handlePdfChange = async (e) => {
         const file = e.target.files ? e.target.files[0] : e.dataTransfer.files[0];
         if (file) {
             if (file.size > 5 * 1024 * 1024) {
                 alert("File size should not exceed 5MB");
                 return;
             }
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setSelectedPdfRender(reader.result);
-            };
-            reader.readAsDataURL(file);
+
+            // Convert PDF to base64 for preview and storage
+            const base64 = await convertFileToBase64(file);
+            setSelectedPdfRender(base64);
             setSelectedPdf(file);
+
+            // Add PDF to chat history immediately
+            const userMessage = {
+                type: 'user',
+                content: 'Uploaded PDF: ' + file.name,
+                pdf: base64,
+                timestamp: new Date().toISOString()
+            };
+            setChatHistory(prev => [...prev, userMessage]);
         }
     };
 
@@ -77,33 +85,50 @@ const KonuAnlatim = ({ onHistorySaved, initialChatHistory = [] }) => {
         handlePdfChange(e);
     };
 
+    const convertFileToBase64 = (file) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    };
+
     const handleSendMessage = async () => {
         if (!message && !selectedPdf) {
             alert("Please enter a message or select a PDF.");
             return;
         }
 
-        const userMessage = {
-            type: 'user',
-            content: message || '',
-            pdf: selectedPdfRender,
-            timestamp: new Date().toISOString()
-        };
-
-        setChatHistory(prev => [...prev, userMessage]);
-
-        const formData = new FormData();
-        formData.append('message', message || '');
-        if (selectedPdf) {
-            formData.append('file', selectedPdf);
-        }
-
-        const lastMessages = chatHistory.slice(-5);
-        formData.append('history', JSON.stringify(lastMessages));
-
         setIsLoading(true);
 
         try {
+            const formData = new FormData();
+            
+            // Add message to FormData
+            formData.append('message', message || '');
+
+            // Add PDF file if it exists
+            if (selectedPdf) {
+                formData.append('file', selectedPdf);
+            }
+
+            // Get last 5 messages for context
+            const lastMessages = chatHistory.slice(-5).map(msg => ({
+                ...msg,
+                pdf: msg.pdf ? msg.pdf : null // Ensure PDF data is included in history
+            }));
+            formData.append('history', JSON.stringify(lastMessages));
+
+            // Add user message to chat history
+            const userMessage = {
+                type: 'user',
+                content: message || '',
+                pdf: selectedPdfRender,
+                timestamp: new Date().toISOString()
+            };
+            setChatHistory(prev => [...prev, userMessage]);
+
             const response = await fetch(`${config.apiUrl}/chat_konu/`, {
                 method: 'POST',
                 body: formData,
@@ -113,6 +138,7 @@ const KonuAnlatim = ({ onHistorySaved, initialChatHistory = [] }) => {
                 throw new Error(await response.text());
             }
 
+            // Add assistant's response placeholder
             setChatHistory(prev => [...prev, {
                 type: 'assistant',
                 content: '',
@@ -136,25 +162,37 @@ const KonuAnlatim = ({ onHistorySaved, initialChatHistory = [] }) => {
         }
     };
 
+
     const handleRefreshMessage = async (index) => {
         if (isLoading || refreshingIndex !== null) return;
         
         setRefreshingIndex(index);
         
-        const userMessage = chatHistory[index - 1]; 
+        const userMessage = chatHistory[index - 1];
         if (!userMessage) return;
 
         const formData = new FormData();
         formData.append('message', userMessage.content || '');
+
+        // Handle PDF refresh properly
         if (userMessage.pdf) {
-           
-            const response = await fetch(userMessage.pdf);
-            const blob = await response.blob();
-            formData.append('file', blob);
+            try {
+                // Convert base64 back to blob
+                const base64Response = await fetch(userMessage.pdf);
+                const blob = await base64Response.blob();
+                formData.append('file', blob, 'document.pdf');
+            } catch (error) {
+                console.error('Error processing PDF for refresh:', error);
+            }
         }
 
-
-        const previousMessages = chatHistory.slice(Math.max(0, index - 5), index); 
+        const previousMessages = chatHistory
+            .slice(Math.max(0, index - 5), index)
+            .map(msg => ({
+                ...msg,
+                pdf: msg.pdf ? msg.pdf : null
+            }));
+        
         formData.append('history', JSON.stringify(previousMessages));
 
         try {

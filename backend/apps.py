@@ -28,7 +28,8 @@ from fastapi.staticfiles import StaticFiles
 import threading
 import queue
 import time
-
+from langchain_community.tools import DuckDuckGoSearchRun
+from pypdf import PdfReader
 # Initialize database
 models.Base.metadata.create_all(bind=engine)
 
@@ -50,11 +51,11 @@ video_queue = queue.Queue()
 video_threads = {}
 MAX_CONCURRENT_VIDEOS = 3
 
+search = DuckDuckGoSearchRun()
 # Configure Gemini AI
 genai.configure(api_key='AIzaSyCeusRpeamEuHVVRrNCwmu0XtDj_QL8mXc')
 model = genai.GenerativeModel('gemini-1.5-pro')
 
-# Configure CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -81,14 +82,14 @@ def video_worker():
     while True:
         try:
             video_id = video_queue.get()
-            if video_id is None:  # Poison pill to stop the thread
+            if video_id is None:  
                 break
                 
             try:
-                # Update status to show it's being processed
+                
                 video_database[video_id]["status"] = "processing"
                 
-                # Create the video
+                
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
                 loop.run_until_complete(create_videos.run(video_id))
@@ -150,13 +151,20 @@ def create_content_parts(message: str, image_data: Optional[bytes] = None) -> Li
     
     return genai.protos.Content(parts=parts)
 
-def build_prompt(message: str, history: List[dict], types) -> List[Dict[str, Any]]:
+def build_prompt(message: str, history: List[dict], types,extra=None) -> List[Dict[str, Any]]:
     if types == "question":
         messages = [{'role': 'user', 'parts': prompt.system_prompt_question}]
     elif types == "create_question":
-        messages = [{'role': 'user', 'parts': prompt.system_prompt_question}]
+            messages = [{'role': 'user', 'parts': prompt.system_prompt_create_question}]
     else:
-        messages = [{'role': 'user', 'parts': prompt.system_prompt_konu}]
+        try:
+            internet_search=search.invoke(message)
+        except:
+            internet_search=""
+        try:
+            messages = [{'role': 'user', 'parts': prompt.system_prompt_konu.format(internet_search,extra)}]
+        except:
+            messages = [{'role': 'user', 'parts': prompt.system_prompt_konu}]
     
     for msg in history:
         role = "user" if msg['type'] == 'user' else "model"
@@ -169,12 +177,12 @@ def build_prompt(message: str, history: List[dict], types) -> List[Dict[str, Any
         'role': 'user',
         'parts': [message]
     })
-    
+    print(messages)
     return messages
 
-async def send_message(message: str, history: List[dict], image_data: Optional[bytes] = None, types="question"):
+async def send_message(message: str, history: List[dict], image_data: Optional[bytes] = None, types="question",extra=None):
     try:
-        content = build_prompt(message, history, types)
+        content = build_prompt(message, history, types,extra)
 
         if image_data:
             content_parts = create_content_parts(message, image_data)
@@ -284,6 +292,13 @@ async def chat_endpoint(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
 
+def clean_text(text: str) -> str:
+    if not text:
+        return ""
+
+    cleaned_text = ' '.join(text.split())
+    return cleaned_text
+
 @app.post("/api/chat_konu/")
 async def chat_endpoint(
     message: str = Form(...),
@@ -292,15 +307,21 @@ async def chat_endpoint(
 ) -> StreamingResponse:
     try:
         chat_history = json.loads(history)
-        
-        contents = None
+        print(file)
         if file:
-            if not file.content_type.startswith('image/'):
-                raise HTTPException(status_code=400, detail="Only image files are supported")
             contents = await file.read()
-            
+            try:
+                pdf_file = io.BytesIO(contents)
+                reader = PdfReader(pdf_file)
+                text = "\n\n".join(page.extract_text() for page in reader.pages if page.extract_text())
+                text = clean_text(text)
+            except Exception as e:
+                print(f"An error occurred while reading the PDF: {e}")
+                text = ""
+        else:
+            text=""        
         async def stream_response():
-            async for chunk in send_message(message, chat_history, contents, "konu"):
+            async for chunk in send_message(message, chat_history, None, "konu",text):
                 yield chunk.encode('utf-8')
         
         return StreamingResponse(

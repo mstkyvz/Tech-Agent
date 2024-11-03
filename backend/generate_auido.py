@@ -34,7 +34,6 @@ class Dialogue(BaseModel):
     dialogue: List[DialogueItem]
 
 def clean_text(text: str) -> str:
-    """Metni temizler ve kodlama sorunlarını önler."""
     if not text:
         return ""
 

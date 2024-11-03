@@ -13,77 +13,65 @@ class Solution(VoiceoverScene):
 
 
     def step_1(self):
-        text1 = Tex(r"A(a, b) noktasının B(3, 0) noktasına göre simetriği C noktası olsun.").scale(0.8)
-        with self.voiceover(text="A(a, b) noktasının B(3, 0) noktasına göre simetriği C noktası olsun.  Simetri noktası bulma formülünü kullanarak C noktasının koordinatlarını bulacağız.") as tracker:
+        text1 = Text("1. Adım: Soruyu Anlama", color=RED, font_size=36).scale(0.8)
+        text2 = Text("İki sayının toplamı isteniyor.", color=BLUE, font_size=30).scale(0.8).next_to(text1, DOWN)
+
+        with self.voiceover(text="İlk adımda, soruyu anlamaya çalışıyoruz. Bize verilen problemde iki sayının toplamını bulmamız isteniyor.") as tracker:
             self.play(Create(text1))
-            self.wait(3)
-        self.play(FadeOut(text1))
+            self.wait(0.5)
+            self.play(Create(text2))
+            self.wait(2.5)
+        self.play(FadeOut(text1), FadeOut(text2))
+
 
     def step_2(self):
-        text2 = MathTex(r"x = 2 \cdot 3 - a = 6 - a").scale(0.8).set_color(RED)
-        text3 = MathTex(r"y = 2 \cdot 0 - b = -b").scale(0.8).set_color(GREEN)
-        text4 = MathTex(r"C(6 - a, -b)").scale(0.8).set_color(BLUE)
+        text1 = Text("2. Adım: Verileri Belirleme", color=GREEN, font_size=36).scale(0.8)
+        text2 = Text("Sayılar 2 ve 2'dir.", color=PURPLE, font_size=30).scale(0.8).next_to(text1, DOWN)
 
-        with self.voiceover(text="C noktasının koordinatları (x, y) ise, x eşittir 2 çarpı 3 eksi a, yani 6 eksi a. y eşittir 2 çarpı 0 eksi b, yani eksi b. Böylece C noktasının koordinatları (6 eksi a, eksi b) olur.") as tracker:
+        with self.voiceover(text="İkinci adımda, problemde verilen sayıları belirliyoruz. Bu problemde, toplamamız gereken sayılar 2 ve 2'dir.") as tracker:
+            self.play(Create(text1))
+            self.wait(0.5)
             self.play(Create(text2))
-            self.wait(1)
-            self.play(text2.animate.shift(UP))
-            self.play(Create(text3))
-            self.wait(1)
-            self.play(text3.animate.shift(UP))
-            self.play(Create(text4))
-            self.wait(3)
-
-        self.play(FadeOut(text2),FadeOut(text3),FadeOut(text4))
+            self.wait(2.5)
+        self.play(FadeOut(text1), FadeOut(text2))
 
 
     def step_3(self):
+        text1 = Text("3. Adım: Formül Seçimi", color=BLUE, font_size=36).scale(0.8)
+        formula = MathTex("a + b = c", color=PINK).scale(0.8).next_to(text1, DOWN)
+        text2 = Text("Toplama işlemi kullanılacaktır.", color=BLACK, font_size=30).scale(0.8).next_to(formula, DOWN)
 
-        text5 = Tex(r"C noktasının y-eksenine göre simetriği D noktasıdır.").scale(0.8)
-        text6 = MathTex(r"D(-(6 - a), -b) = (a - 6, -b)").scale(0.8).set_color(PINK)
-        with self.voiceover(text="C noktasının y-eksenine göre simetriği D noktasıdır. D noktasının koordinatlarını bulmak için x koordinatının işaretini değiştiririz. Bu durumda D noktasının koordinatları (a eksi 6, eksi b) olur.") as tracker:
-            self.play(Create(text5))
-            self.wait(3)
-            self.play(FadeOut(text5))
-            self.play(Create(text6))
-            self.wait(3)
-        self.play(FadeOut(text6))
-
+        with self.voiceover(text="Üçüncü adımda, problemi çözmek için kullanacağımız formülü seçiyoruz. Bu problem için toplama formülü 'a + b = c' kullanılacaktır.") as tracker:
+            self.play(Create(text1))
+            self.wait(0.5)
+            self.play(Write(formula))
+            self.wait(0.5)
+            self.play(Create(text2))
+            self.wait(1.5)
+        self.play(FadeOut(text1), FadeOut(formula), FadeOut(text2))
 
 
     def step_4(self):
-        text7 = Tex(r"C ve D noktalarından geçen doğrunun denklemi y = -x - 1'dir.").scale(0.8)
-        text8 = Tex(r"C ve D noktalarını denklemde yerine koyalım.").scale(0.8).set_color(PURPLE)
-        with self.voiceover(text="C ve D noktalarından geçen doğrunun denklemi y eşittir eksi x eksi 1'dir. Şimdi C ve D noktalarının koordinatlarını bu denklemde yerine koyarak a ve b arasındaki ilişkiyi bulacağız.") as tracker:
-             self.play(Create(text7))
-             self.wait(1)
-             self.play(text7.animate.shift(UP))
-             self.play(Create(text8))
-             self.wait(3)
-        self.play(FadeOut(text7),FadeOut(text8))
+        text1 = Text("4. Adım: Adım Adım Çözüm", color=PINK, font_size=36).scale(0.8)
+        solution = MathTex("2 + 2 = 4", color=RED).scale(0.8).next_to(text1, DOWN)
+
+
+        with self.voiceover(text="Dördüncü adımda, belirlediğimiz formülü kullanarak adım adım çözüme ulaşıyoruz. 2 + 2 = 4 işlemi ile sonuca ulaşıyoruz.") as tracker:
+            self.play(Create(text1))
+            self.wait(0.5)
+            self.play(Write(solution))
+            self.wait(2.5)
+        self.play(FadeOut(text1), FadeOut(solution))
+
+
 
     def step_5(self):
-        text9 = MathTex(r"b = 7 - a").scale(0.8).set_color(RED)
-        text10 = MathTex(r"b = a - 5").scale(0.8).set_color(GREEN)
-        text11 = MathTex(r"a = 6").scale(0.8).set_color(BLUE)
-        text12 = MathTex(r"b = 1").scale(0.8).set_color(PINK)
-        text13 = MathTex(r"a + b = 7").scale(0.8).set_color(BLACK).set_color(YELLOW)
+        text1 = Text("5. Adım: Sonuç", color=PURPLE, font_size=36).scale(0.8)
+        result = MathTex(r"\underline{2 + 2 = 4}", color=GREEN).scale(0.8).next_to(text1, DOWN)
 
-
-        with self.voiceover(text="C noktasını denklemde yerine koyarsak, b eşittir 7 eksi a bulunur. D noktasını denklemde yerine koyarsak, b eşittir a eksi 5 bulunur. Bu iki denklemi çözerek a eşittir 6 ve b eşittir 1 buluruz. Sonuç olarak a artı b eşittir 7 olur.  Cevap A şıkkıdır.") as tracker:
-            self.play(Create(text9))
-            self.wait(1)
-            self.play(text9.animate.shift(UP))
-            self.play(Create(text10))
-            self.wait(1)
-            self.play(text10.animate.shift(UP))
-            self.play(Create(text11))
-            self.wait(1)
-            self.play(text11.animate.shift(UP))
-            self.play(Create(text12))
-            self.wait(1)
-            self.play(text12.animate.shift(UP))
-            self.play(Create(text13))
-
-            self.wait(3)
+        with self.voiceover(text="Son adımda, bulduğumuz sonucu değerlendiriyoruz. 2 ile 2'nin toplamı 4'tür. İşlem tamamlanmıştır.") as tracker:
+            self.play(Create(text1))
+            self.wait(0.5)
+            self.play(Write(result))
+            self.wait(2.5)
 
