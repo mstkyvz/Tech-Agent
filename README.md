@@ -1,10 +1,5 @@
 # Tech Agent
 
-Bu projenin ne yaptığı ve kimin için olduğu hakkında kısa bir açıklama
-
-
-This project is a web application developed for the BTK Hackathon Eğitim. It consists of a frontend built with React and a backend powered by FastAPI.
-
 ## Proje Yetenekleri
 
 Bu proje, öğrenme deneyimlerini geliştirmek için yapay zekadan yararlanarak eğitimi desteklemektedir. Yapay zeka özellikleri şunları içerir:
