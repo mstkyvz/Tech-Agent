@@ -1,71 +1,189 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { PDFDownloadLink, Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
+import { PDFDownloadLink, Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/renderer';
 import { Download } from 'lucide-react';
 import ChatHistory from './ChatHistory';
 import VideoModal from './VideoModel';
 import ImagePreview from './ImagePreview';
 import config from '../config.json'; 
+import ReactMarkdown from 'react-markdown';
 
-const styles = StyleSheet.create({
-  page: {
-    padding: 30,
-    backgroundColor: '#ffffff'
-  },
-  message: {
-    marginBottom: 20,
-    padding: 10,
-    borderRadius: 5,
-  },
-  userMessage: {
-    backgroundColor: '#f3f4f6',
-    marginLeft: '20%',
-  },
-  assistantMessage: {
-    backgroundColor: '#ffffff',
-    marginRight: '20%',
-    border: '1px solid #e5e7eb',
-  },
-  messageText: {
-    fontSize: 12,
-    lineHeight: 1.5,
-  },
-  image: {
-    marginBottom: 10,
-    maxWidth: '100%',
-    maxHeight: 200,
-    objectFit: 'contain',
-  },
-  timestamp: {
-    fontSize: 10,
-    color: '#666666',
-    marginTop: 5,
-  },
-});
+Font.register({
+    family: 'Roboto',
+    fonts: [
+      {
+        src: 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-light-webfont.ttf',
+        fontWeight: 'normal',
+      },
+      {
+        src: 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-bold-webfont.ttf',
+        fontWeight: 'bold',
+      },
+    ],
+  });
+  
+  const styles = StyleSheet.create({
+    page: {
+      padding: 30,
+      backgroundColor: '#ffffff',
+      fontFamily: 'Roboto',
+    },
+    message: {
+      marginBottom: 20,
+      padding: 10,
+    },
+    userMessage: {
+      backgroundColor: '#f3f4f6',
+      marginLeft: '20%',
+    },
+    assistantMessage: {
+      backgroundColor: '#ffffff',
+    },
+    messageText: {
+      fontSize: 12,
+      lineHeight: 1.5,
+      fontFamily: 'Roboto',
+    },
+    image: {
+      marginBottom: 10,
+      maxWidth: '100%',
+      maxHeight: 200,
+      objectFit: 'contain',
+    },
+    timestamp: {
+      fontSize: 10,
+      color: '#666666',
+      marginTop: 5,
+      fontFamily: 'Roboto',
+    },
+    // Markdown stilleri
+    heading1: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      marginVertical: 10,
+    },
+    heading2: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      marginVertical: 8,
+    },
+    heading3: {
+      fontSize: 14,
+      fontWeight: 'bold',
+      marginVertical: 6,
+    },
+    paragraph: {
+      fontSize: 12,
+      marginVertical: 4,
+    },
+    listItem: {
+      fontSize: 12,
+      marginLeft: 20,
+    },
+    code: {
+      fontFamily: 'Courier',
+      backgroundColor: '#f5f5f5',
+      padding: 5,
+      borderRadius: 3,
+    },
+    codeBlock: {
+      fontFamily: 'Courier',
+      backgroundColor: '#f5f5f5',
+      padding: 10,
+      marginVertical: 5,
+      borderRadius: 5,
+    },
+  });
+  
+  // Markdown metni PDF için render eden bileşen
+  const MarkdownText = ({ children }) => {
+    const renderMarkdown = (text) => {
+      return (
+        <ReactMarkdown
+          components={{
+            h1: ({children}) => <Text style={styles.heading1}>{children}</Text>,
+            h2: ({children}) => <Text style={styles.heading2}>{children}</Text>,
+            h3: ({children}) => <Text style={styles.heading3}>{children}</Text>,
+            p: ({children}) => <Text style={styles.paragraph}>{children}</Text>,
+            li: ({children}) => <Text style={styles.listItem}>• {children}</Text>,
+            code: ({inline, children}) => (
+              <Text style={inline ? styles.code : styles.codeBlock}>
+                {children}
+              </Text>
+            ),
+          }}
+        >
+          {text}
+        </ReactMarkdown>
+      );
+    };
+  
+    return <View>{renderMarkdown(children)}</View>;
+  };
+  
 
-const ChatPDF = ({ messages }) => (
-  <Document>
-    <Page size="A4" style={styles.page}>
-      {messages.map((message, index) => (
-        <View key={index} style={[
-          styles.message,
-          message.type === 'user' ? styles.userMessage : styles.assistantMessage
-        ]}>
-          {message.image && (
-            <Image
-              src={message.image}
-              style={styles.image}
-            />
-          )}
-          <Text style={styles.messageText}>{message.content}</Text>
-          <Text style={styles.timestamp}>
-            {new Date(message.timestamp).toLocaleString()}
-          </Text>
-        </View>
-      ))}
-    </Page>
-  </Document>
-);
+  // Helper function to detect if text contains markdown
+  const containsMarkdown = (text) => {
+    const markdownPatterns = [
+      /^#+ /, // headers
+      /\*\*.+\*\*/, // bold
+      /\*.+\*/, // italic
+      /```[\s\S]*?```/, // code blocks
+      /`[^`]+`/, // inline code
+      /^\s*[-*+] /, // unordered lists
+      /^\s*\d+\. /, // ordered lists
+      /\[.+\]\(.+\)/, // links
+      /!\[.+\]\(.+\)/, // images
+      /^\s*>.+/, // blockquotes
+      /^\s*-{3,}/, // horizontal rules
+      /\|.+\|.+\|/, // tables
+    ];
+  
+    return markdownPatterns.some(pattern => pattern.test(text));
+  };
+  
+
+  const markdownToPlainText = (markdown) => {
+    return markdown
+      .replace(/#{1,6} /g, '') // headers
+      .replace(/\*\*/g, '') // bold
+      .replace(/\*/g, '') // italic
+      .replace(/```[\s\S]*?```/g, (match) => match.replace(/```/g, '')) // code blocks
+      .replace(/`([^`]+)`/g, '$1') // inline code
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // links
+      .replace(/!\[([^\]]+)\]\([^)]+\)/g, '$1') // images
+      .replace(/^\s*[-*+] /gm, '') // unordered lists
+      .replace(/^\s*\d+\. /gm, '') // ordered lists
+      .replace(/^\s*>/gm, '') // blockquotes
+      .replace(/^\s*-{3,}/gm, '') // horizontal rules
+      .replace(/\|/g, ' ') // tables
+      .trim();
+  };
+  
+  const ChatPDF = ({ messages }) => (
+    <Document>
+      <Page size="A4" style={styles.page}>
+        {messages.map((message, index) => (
+          <View key={index} style={[
+            styles.message,
+            message.type === 'user' ? styles.userMessage : styles.assistantMessage
+          ]}>
+            {message.image && (
+              <Image
+                src={message.image}
+                style={styles.image}
+              />
+            )}
+            <MarkdownText>{message.content}</MarkdownText>
+            <Text style={styles.timestamp}>
+              {new Date(message.timestamp).toLocaleString('tr-TR')}
+            </Text>
+          </View>
+        ))}
+      </Page>
+    </Document>
+  );
+
 
 const CreateQuestion = ({ onHistorySaved, initialChatHistory = [] }) => {
     const navigate = useNavigate();
